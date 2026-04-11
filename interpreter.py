@@ -27,7 +27,7 @@ Usage:
 from parser import (
     Program, FuncDef, VarDecl, ArrayDecl, Block,
     IfStmt, WhileStmt, DoWhileStmt, ForStmt,
-    BreakStmt, ContinueStmt, Return,
+    BreakStmt, ContinueStmt, Return, SwitchStmt,
     BinOp, UnaryOp, Assignment, Call,
     Identifier, Number, Char, StringLiteral,
     AddressOf, Deref, ArrayAccess,
@@ -202,6 +202,7 @@ class Interpreter:
           DoWhileStmt         → 先執行主體再判斷條件，捕捉 Break / Continue 例外
           ForStmt             → 含 init / condition / update 的完整 for 迴圈
           Return              → 求值後拋出 ReturnException
+          SwitchStmt          → 依運算式值跳轉對應 case，支援 fall-through 與 break
           BreakStmt           → 拋出 BreakException
           ContinueStmt        → 拋出 ContinueException
           其他（運算式節點）   → 轉交 eval_expr() 求值（忽略回傳值）
@@ -267,6 +268,27 @@ class Interpreter:
 
         elif isinstance(node, BreakStmt):
             raise BreakException()
+        
+        elif isinstance(node, SwitchStmt):
+            val = self.eval_expr(node.expr)
+            # 尋找匹配的 case
+            matched = False
+            for case_val, case_stmts in node.cases:
+                if not matched and case_val != val:
+                    continue
+                matched = True
+                try:
+                    for stmt in case_stmts:
+                        self.exec_stmt(stmt)
+                except BreakException:
+                    return
+            # 若無匹配的 case 或 fall-through 到底，執行 default
+            if not matched and node.default is not None:
+                try:
+                    for stmt in node.default:
+                        self.exec_stmt(stmt)
+                except BreakException:
+                    return
 
         elif isinstance(node, ContinueStmt):
             raise ContinueException()
@@ -333,6 +355,8 @@ class Interpreter:
 
         elif isinstance(node, Deref):
             addr = self.eval_expr(node.pointer)
+            if addr == 0:
+                raise RuntimeError("Runtime error: null pointer dereference")
             return self.memory.read(addr)
 
         elif isinstance(node, ArrayAccess):
@@ -562,6 +586,8 @@ class Interpreter:
             self.symtable.set_value(node.name, val)
         elif isinstance(node, Deref):
             addr = self.eval_expr(node.pointer)
+            if addr == 0:
+                raise RuntimeError("Runtime error: null pointer dereference")
             self.memory.write(addr, val)
         elif isinstance(node, ArrayAccess):
             symbol = self.symtable.lookup(node.array.name)

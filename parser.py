@@ -384,6 +384,29 @@ class ContinueStmt(Stmt):
 
     def __repr__(self):
         return "ContinueStmt()"
+    
+class SwitchStmt(Stmt):
+    """
+    switch/case 條件分支陳述式。
+
+    依據運算式的值，跳轉至對應的 case 標籤執行，
+    若無匹配的 case 則執行 default 分支（若存在）。
+    各 case 之間支援 fall-through，遇到 break 時跳出整個 switch。
+
+    Attributes:
+        expr     (Expr):              switch 的判斷運算式。
+        cases    (list[tuple]):       case 分支列表，每個元素為
+                                      (value: int, stmts: list[Stmt])。
+        default  (list[Stmt] | None): default 分支的陳述式列表；
+                                      若無 default 則為 None。
+    """
+    def __init__(self, expr, cases, default=None):
+        self.expr = expr
+        self.cases = cases
+        self.default = default
+
+    def __repr__(self):
+        return f"SwitchStmt({self.expr}, cases={self.cases}, default={self.default})"
 
 
 class FuncDef(Stmt):
@@ -580,6 +603,8 @@ class Parser:
             Stmt: 對應的陳述式節點。
         """
         tok = self.current_token
+        if tok.kind == "SWITCH":
+            return self.switch_stmt()
         if tok.kind == "IF":
             return self.if_stmt()
         if tok.kind == "WHILE":
@@ -752,6 +777,63 @@ class Parser:
         return VarDecl(var_type, name, None, is_pointer)
 
     # ── 控制流程陳述式 ────────────────────────────
+    def switch_stmt(self) -> SwitchStmt:
+        """
+        解析 switch/case 條件分支陳述式。
+
+        語法：
+          switch ( expr ) {
+              case <整數常數> : <陳述式>*
+              ...
+              default : <陳述式>*   （可省略）
+          }
+
+        各 case 的值必須為整數常數（Number 節點）。
+        case 與 default 之間支援 fall-through，
+        遇到 break 時由直譯器負責跳出整個 switch。
+        """
+        self.eat("SWITCH")
+        self.eat("LPAREN")
+        expr = self.expr()
+        self.eat("RPAREN")
+        self.eat("LBRACE")
+
+        cases = []    # [(value, [stmts]), ...]
+        default = None
+
+        while self.current_token.kind not in ("RBRACE", "EOF"):
+            if self.current_token.kind == "CASE":
+                self.eat("CASE")
+                val = self.current_token.value
+                self.eat("NUMBER")
+                self.eat("COLON")
+                stmts = []
+                while self.current_token.kind not in ("CASE", "DEFAULT", "RBRACE", "EOF"):
+                    if self.is_type_token():
+                        stmts.append(self.var_decl())
+                    else:
+                        stmts.append(self.statement())
+                cases.append((val, stmts))
+
+            elif self.current_token.kind == "DEFAULT":
+                self.eat("DEFAULT")
+                self.eat("COLON")
+                stmts = []
+                while self.current_token.kind not in ("CASE", "DEFAULT", "RBRACE", "EOF"):
+                    if self.is_type_token():
+                        stmts.append(self.var_decl())
+                    else:
+                        stmts.append(self.statement())
+                default = stmts
+
+            else:
+                raise Exception(
+                    f"Line {self.current_token.line}: "
+                    f"Expected 'case' or 'default' in switch, got {self.current_token.kind}"
+                )
+
+        self.eat("RBRACE")
+        return SwitchStmt(expr, cases, default)
 
     def if_stmt(self) -> IfStmt:
         """解析 if / if-else 條件陳述式。"""

@@ -51,7 +51,8 @@ def preprocess(source: str) -> str:
     處理步驟：
       1. 逐行掃描，找出所有 `#define NAME VALUE` 定義並記錄在字典中。
       2. 移除含有 #define 的行。
-      3. 在剩餘原始碼中，以文字替換的方式展開所有巨集名稱。
+      3. 以手工分詞的方式逐字元掃描剩餘原始碼，將完整匹配的識別字
+         替換為對應的巨集值，避免誤觸其他識別字中的子字串。
 
     Args:
         source (str): 完整的原始碼字串。
@@ -61,7 +62,9 @@ def preprocess(source: str) -> str:
 
     Note:
         不支援帶參數的函式型巨集（例如 `#define MAX(a,b) ...`）。
-        替換採用簡單字串取代，可能誤觸識別字子字串，使用時須留意命名。
+        替換採用識別字邊界比對：只有獨立出現的完整識別字才會被替換，
+        不會誤觸包含在其他識別字中的子字串（例如 #define N 8 不會
+        影響 count、int 等含有字母 n 的識別字）。
     """
     defines = {}
     lines = []
@@ -77,11 +80,29 @@ def preprocess(source: str) -> str:
 
     result = '\n'.join(lines)
 
-    # 將所有巨集名稱替換為對應的值
-    for name, value in defines.items():
-        result = result.replace(name, value)
+    if not defines:
+        return result
 
-    return result
+    # 逐字元掃描，以手工分詞方式展開巨集
+    # 遇到識別字起始字元（字母或底線）時，讀取完整識別字後查表替換；
+    # 其他字元（運算子、空白、數字等）原樣輸出，確保不誤觸子字串。
+    out = []
+    i = 0
+    while i < len(result):
+        c = result[i]
+        if c.isalpha() or c == '_':
+            # 讀取完整識別字
+            j = i
+            while j < len(result) and (result[j].isalnum() or result[j] == '_'):
+                j += 1
+            word = result[i:j]
+            out.append(defines.get(word, word))  # 有對應巨集則替換，否則原樣保留
+            i = j
+        else:
+            out.append(c)
+            i += 1
+
+    return ''.join(out)
 
 
 # ─────────────────────────────────────────────
@@ -93,7 +114,7 @@ class Lexer:
     Small-C 詞法分析器。
 
     逐字元讀取原始碼，識別並產生以下類別的 Token：
-      - 關鍵字：int、char、void、if、else、while、for、do、break、continue、return
+      - 關鍵字：int、char、void、if、else、while、for、do、break、continue、return、switch、case、default
       - 識別字（IDENT）：變數名、函式名等
       - 數字字面量（NUMBER）：十進位整數或 0x 開頭的十六進位整數
       - 字元字面量（CHAR）：單引號包圍的單一字元，支援跳脫序列
@@ -116,6 +137,7 @@ class Lexer:
         'while': "WHILE", 'for': 'FOR', 'do': 'DO',
         'break': "BREAK", 'continue': 'CONTINUE',
         'return': 'RETURN',
+        'switch': 'SWITCH', 'case': 'CASE', 'default': 'DEFAULT',
     }
 
     # 單字元運算子對應表
@@ -125,6 +147,7 @@ class Lexer:
         '+': 'PLUS',  '-': 'MINUS',   '*': 'MUL',
         '/': 'DIV',   '%': 'MOD',     '=': 'ASSIGN',
         '>': 'GT',    '<': 'LT',
+        ':': 'COLON',
     }
 
     # 雙字元運算子對應表（優先於單字元運算子進行匹配）
