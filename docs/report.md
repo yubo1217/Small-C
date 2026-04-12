@@ -1,6 +1,6 @@
 ---
 title: "期末專題技術報告：Small-C 互動式解譯器"
-author: "Yu-Bo Lin"
+author: "林煜博"
 date: "2026 年春季學期"
 geometry: "margin=2.5cm"
 fontsize: 12pt
