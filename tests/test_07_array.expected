@@ -1,0 +1,6 @@
+Array:   15 3 9 7 1 12 5 
+Sum = 52
+Search 7: index 3
+Search 99: index -1
+Reversed: 5 12 1 7 9 3 15 
+Program exited with return value 0.

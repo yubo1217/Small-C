@@ -1,0 +1,12 @@
+hex 0xFF = 255
+char 'A' = A
+neg = -42
+zero = 0
+abs(-7) = 7
+max(3,7) = 7
+min(3,7) = 3
+pow(2,10) = 1024
+sqrt(144) = 12
+sizeof_int() = 4
+sizeof_char() = 1
+Program exited with return value 0.

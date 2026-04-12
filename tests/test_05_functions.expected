@@ -1,0 +1,11 @@
+add(12, 8) = 20
+multiply(6, 7) = 42
+gcd(48, 18) = 6
+gcd(100, 75) = 25
+1 is odd
+2 is even
+3 is odd
+4 is even
+5 is odd
+6 is even
+Program exited with return value 0.

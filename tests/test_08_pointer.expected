@@ -1,0 +1,7 @@
+Before swap: x=10, y=20
+After swap:  x=20, y=10
+*p = 20
+x after *p=99: 99
+sum via ptr = 150
+sorted: 10 20 30 40 50 
+Program exited with return value 0.

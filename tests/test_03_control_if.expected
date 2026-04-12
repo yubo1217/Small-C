@@ -1,0 +1,15 @@
+Sign tests:
+  -10 -> negative
+  -1 -> negative
+  0 -> zero
+  1 -> positive
+  5 -> positive
+  100 -> positive
+Range [1,10] tests:
+  -10 is out of range
+  -1 is out of range
+  0 is out of range
+  1 is in range
+  5 is in range
+  100 is out of range
+Program exited with return value 0.

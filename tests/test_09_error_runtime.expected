@@ -1,0 +1,3 @@
+10 / 2 = 5
+arr[3] = 9
+Error: Runtime error: division by zero.
