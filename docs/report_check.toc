@@ -1,0 +1,45 @@
+\contentsline {section}{\numberline {1}摘要}{3}{section.1}%
+\contentsline {section}{\numberline {2}系統架構設計說明}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}模組劃分}{4}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}資料流程}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}類別結構}{6}{subsection.2.3}%
+\contentsline {section}{\numberline {3}各模組設計決策與實作細節}{8}{section.3}%
+\contentsline {subsection}{\numberline {3.1}lexer.py --- 詞法分析器}{8}{subsection.3.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}前處理：\texttt {preprocess()}}{8}{subsubsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.2}詞法掃描：\texttt {Lexer.tokenize()}}{8}{subsubsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.2}parser.py --- 語法分析器與 AST}{9}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}AST 節點設計}{9}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}遞迴下降語法分析}{9}{subsubsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.3}函式定義與變數宣告的歧義消解}{9}{subsubsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.3}interpreter.py --- 樹狀走訪直譯器}{9}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}兩種執行模式}{9}{subsubsection.3.3.1}%
+\contentsline {subsubsection}{\numberline {3.3.2}控制流程以 Python 例外實作}{9}{subsubsection.3.3.2}%
+\contentsline {subsubsection}{\numberline {3.3.3}整數截斷}{10}{subsubsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.4}memory.py --- 記憶體模型}{10}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}symtable.py --- 符號表}{10}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}builtins\_funcs.py --- 內建函式}{10}{subsection.3.6}%
+\contentsline {subsection}{\numberline {3.7}repl.py --- 互動式介面}{10}{subsection.3.7}%
+\contentsline {subsubsection}{\numberline {3.7.1}多行輸入收集：\texttt {ReplInputCollector}}{10}{subsubsection.3.7.1}%
+\contentsline {subsubsection}{\numberline {3.7.2}else 跨行偵測}{10}{subsubsection.3.7.2}%
+\contentsline {subsubsection}{\numberline {3.7.3}環境指令}{11}{subsubsection.3.7.3}%
+\contentsline {section}{\numberline {4}符號表的資料結構設計}{12}{section.4}%
+\contentsline {subsection}{\numberline {4.1}概觀}{12}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Symbol 類別}{12}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}作用域堆疊}{12}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}變數宣告流程}{12}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}數值讀寫的型別感知}{12}{subsection.4.5}%
+\contentsline {section}{\numberline {5}記憶體模型的模擬方式}{14}{section.5}%
+\contentsline {subsection}{\numberline {5.1}設計概觀}{14}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Bump Allocator（線性堆疊配置器）}{14}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}NULL 指標保留}{14}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}資料型別的模擬}{14}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}int32() 的設計}{14}{subsection.5.5}%
+\contentsline {subsection}{\numberline {5.6}C 字串的模擬}{14}{subsection.5.6}%
+\contentsline {section}{\numberline {6}測試策略與測試結果分析}{16}{section.6}%
+\contentsline {subsection}{\numberline {6.1}測試集設計策略}{16}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}測試結果}{16}{subsection.6.2}%
+\contentsline {section}{\numberline {7}開發過程中遭遇的主要困難及其解決方案}{17}{section.7}%
+\contentsline {section}{\numberline {8}工作分配與貢獻說明}{18}{section.8}%
+\contentsline {section}{\numberline {9}附錄：Small-C 語言支援範圍摘要}{19}{section.9}%
+\contentsline {subsection}{\numberline {9.1}支援的語言特性}{19}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}不支援的特性}{19}{subsection.9.2}%
