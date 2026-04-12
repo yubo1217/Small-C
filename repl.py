@@ -200,6 +200,9 @@ class REPL:
         print()
 
         collector = ReplInputCollector()
+        # 延遲執行暫存區：if-stmt 完成後先暫存，
+        # 等下一行確認是否為 else 再決定執行或合併。
+        pending_source = None
 
         while True:
             prompt = "sc> " if not collector.source else "  > "
@@ -207,9 +210,36 @@ class REPL:
                 line = input(prompt)
             except EOFError:
                 print()
+                # 離開前先執行暫存中的 if-stmt
+                if pending_source:
+                    self._execute_interactive(pending_source)
                 break
 
-            if not line.strip():
+            stripped = line.strip()
+
+            # ── 暫存 if-stmt 的 else 銜接檢查 ──────────
+            if pending_source is not None and not collector.source:
+                if stripped.startswith('else'):
+                    # 此行是 else：將暫存源碼合入 collector 再繼續收集
+                    collector.source = pending_source + '\n'
+                    pending_source = None
+                    collector.feed(line)
+                    if collector.is_complete():
+                        source = collector.source.strip()
+                        collector.reset()
+                        if source:
+                            pending_source = source  # 可能再跟 else
+                    continue
+                elif stripped:
+                    # 非空且非 else：執行暫存的 if-stmt，再處理此行
+                    self._execute_interactive(pending_source)
+                    pending_source = None
+                    # 不 continue，繼續往下處理此行
+                else:
+                    # 空行：繼續等待，不消費暫存
+                    continue
+
+            if not stripped:
                 if collector.source:
                     collector.feed(line)
                 continue
@@ -224,7 +254,8 @@ class REPL:
                 source = collector.source.strip()
                 collector.reset()
                 if source:
-                    self._execute_interactive(source)
+                    # 延遲執行：暫存，等待可能的 else
+                    pending_source = source
 
     # ── 互動執行 ──────────────────────────────────
 
