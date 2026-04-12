@@ -44,7 +44,7 @@ colorlinks: true
 
 - **`repl.py`**：互動介面。`ReplInputCollector` 追蹤大括號深度與字串狀態，收集跨行輸入；`REPL` 以分派字典處理 16 個環境指令，並處理互動模式下的 `else` 跨行銜接問題。
 
-圖一為各模組的相依關係圖：
+圖1 為各模組的相依關係圖：
 
 ![模組相依關係圖](../uml/packages_SmallC.png){ width=75% }
 
