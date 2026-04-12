@@ -46,7 +46,7 @@ colorlinks: true
 
 圖 1 為各模組的相依關係圖：
 
-![模組相依圖（packages diagram）](../uml/packages_SmallC.png)
+![模組相依圖（packages diagram）](../uml/packages_SmallC.png){ width=75% }
 
 從圖中可見，`repl.py` 是整合核心，它依賴 `interpreter.py`；而 `interpreter.py` 再依賴 `parser.py`、`memory.py`、`symtable.py` 與 `builtins_funcs.py`。`lexer.py` 被 `parser.py` 使用，`memory.py` 被 `symtable.py` 與 `builtins_funcs.py` 共用。
 
@@ -79,7 +79,7 @@ colorlinks: true
 
 圖 2 為各模組中主要類別與 AST 節點的完整類別圖：
 
-![類別圖（classes diagram）](../uml/classes_SmallC.png)
+![類別圖（classes diagram）](../uml/classes_SmallC.png){ width=100% }
 
 AST 節點分為三個層次：
 - **`Expr`** 子類別：`BinOp`、`UnaryOp`、`Assignment`、`Call`、`Identifier`、`Number`、`Char`、`StringLiteral`、`AddressOf`、`Deref`、`ArrayAccess`
