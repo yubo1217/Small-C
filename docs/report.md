@@ -1,7 +1,7 @@
 ---
 title: "期末專題技術報告：Small-C 互動式解譯器"
 author: "林煜博"
-date: "2026 年春季學期"
+date: "Spring 2026"
 geometry: "margin=2.5cm"
 fontsize: 12pt
 mainfont: "Liberation Serif"
