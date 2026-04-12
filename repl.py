@@ -533,7 +533,7 @@ class REPL:
     def _cmd_trace(self, parts):
         """
         啟用或關閉 TRACE 模式。啟用時，直譯器執行每個 AST 節點前
-        會在輸出中印出 [trace] 追蹤資訊，方便除錯。
+        會在輸出中印出 [line n] <statement> 追蹤資訊，方便除錯。
 
         用法：TRACE ON / TRACE OFF
         """

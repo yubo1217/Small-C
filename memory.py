@@ -22,6 +22,15 @@ Usage:
 """
 
 
+def int32(value: int) -> int:
+    """
+    截斷為 32 位元有號整數範圍（−2^31 ～ 2^31−1）。
+    供直譯器與內建函式共用，模擬 C 的 int 溢位行為。
+    """
+    value = int(value)
+    return ((value + 2**31) % 2**32) - 2**31
+
+
 class Memory:
     """
     Small-C 直譯器的線性記憶體空間。
@@ -107,9 +116,7 @@ class Memory:
         """
         if addr < 0 or addr >= self.heap_top:
             raise RuntimeError(f"Memory access out of bounds: address {addr}")
-        value = int(value)
-        value = ((value + 2**31) % 2**32) - 2**31  # 截斷為 32 位元有號整數
-        self.data[addr] = value
+        self.data[addr] = int32(value)  # 截斷為 32 位元有號整數
 
     def write_char(self, addr: int, value: int):
         """
@@ -125,8 +132,7 @@ class Memory:
         if addr < 0 or addr >= self.heap_top:
             raise RuntimeError(f"Memory access out of bounds: address {addr}")
         value = int(value)
-        value = ((value + 128) % 256) - 128  # 截斷為 8 位元有號整數
-        self.data[addr] = value
+        self.data[addr] = ((value + 128) % 256) - 128  # 截斷為 8 位元有號整數
 
     # ── 字串讀寫 ──────────────────────────────────
 

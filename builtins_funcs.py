@@ -25,6 +25,7 @@ Usage:
 import sys
 import math
 import random
+from memory import int32
 
 
 class Builtins:
@@ -74,21 +75,6 @@ class Builtins:
         }
 
     # ── 統一呼叫介面 ──────────────────────────────
-
-    @staticmethod
-    def _int32(value: int) -> int:
-        """
-        截斷為 32 位元有號整數範圍（-2^31 ～ 2^31-1）。
-        供內建函式在回傳前統一截斷，模擬 C 的 int 溢位行為。
-
-        Args:
-            value (int): 要截斷的整數值。
-
-        Returns:
-            int: 截斷後的 32 位元有號整數。
-        """
-        value = int(value)
-        return ((value + 2**31) % 2**32) - 2**31
 
     def call(self, name: str, args: list):
         """
@@ -355,7 +341,7 @@ class Builtins:
         if not args:
             raise RuntimeError("abs: missing argument")
         # 截斷為 32-bit：abs(INT_MIN) 在 C 中為未定義行為，此處採 wrap-around 語意
-        return self._int32(abs(int(args[0])))
+        return int32(abs(int(args[0])))
 
     def _max(self, args):
         """
@@ -399,7 +385,7 @@ class Builtins:
         base, exp = int(args[0]), int(args[1])
         if exp < 0:
             return 0
-        return self._int32(int(base ** exp))
+        return int32(int(base ** exp))
 
     def _sqrt(self, args):
         """
@@ -439,7 +425,7 @@ class Builtins:
         if b == 0:
             raise RuntimeError("mod: division by zero")
         # C 語意：截斷除法，餘數符號與被除數相同（不同於 Python 的 floor 除法）
-        return self._int32(a - int(a / b) * b)
+        return int32(a - int(a / b) * b)
 
     def _rand(self, args):
         """

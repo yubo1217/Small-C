@@ -33,7 +33,7 @@ from parser import (
     AddressOf, Deref, ArrayAccess,
 )
 from symtable import SymbolTable
-from memory import Memory
+from memory import Memory, int32
 from builtins_funcs import Builtins
 
 
@@ -351,9 +351,8 @@ class Interpreter:
             return addr
 
         elif isinstance(node, Identifier):
+            # lookup() 找不到時會拋出 RuntimeError，不會回傳 None
             symbol = self.symtable.lookup(node.name)
-            if symbol is None:
-                raise RuntimeError(f"Runtime error: undefined variable '{node.name}'")
             # 陣列名稱作為右值時，退化為指向首元素的指標（array decay）
             if symbol.is_array:
                 return symbol.addr
@@ -430,29 +429,29 @@ class Interpreter:
         right = self._eval_expr(node.right)
         op = node.op
 
-        if op == "PLUS":    return self._int32(left + right)
-        if op == "MINUS":   return self._int32(left - right)
-        if op == "MUL":     return self._int32(left * right)
+        if op == "PLUS":    return int32(left + right)
+        if op == "MINUS":   return int32(left - right)
+        if op == "MUL":     return int32(left * right)
         if op == "DIV":
             if right == 0:
                 raise RuntimeError("Runtime error: division by zero.")
-            return self._int32(int(left / right))
+            return int32(int(left / right))
         if op == "MOD":
             if right == 0:
                 raise RuntimeError("Runtime error: division by zero.")
             # C 語意：截斷除法，餘數符號與被除數相同（不同於 Python 的 floor 除法）
-            return self._int32(left - int(left / right) * right)
+            return int32(left - int(left / right) * right)
         if op == "EQ":      return 1 if left == right else 0
         if op == "NEQ":     return 1 if left != right else 0
         if op == "LT":      return 1 if left < right else 0
         if op == "GT":      return 1 if left > right else 0
         if op == "LTE":     return 1 if left <= right else 0
         if op == "GTE":     return 1 if left >= right else 0
-        if op == "BIT_AND": return self._int32(left & right)
-        if op == "BIT_OR":  return self._int32(left | right)
-        if op == "BIT_XOR": return self._int32(left ^ right)
-        if op == "LSHIFT":  return self._int32(left << right)
-        if op == "RSHIFT":  return self._int32(left >> right)
+        if op == "BIT_AND": return int32(left & right)
+        if op == "BIT_OR":  return int32(left | right)
+        if op == "BIT_XOR": return int32(left ^ right)
+        if op == "LSHIFT":  return int32(left << right)
+        if op == "RSHIFT":  return int32(left >> right)
 
         raise RuntimeError(f"Unknown binary operator: {op}")
 
@@ -481,13 +480,13 @@ class Interpreter:
         """
         op = node.op
         if op == "MINUS":
-            return self._int32(-self._eval_expr(node.operand))
+            return int32(-self._eval_expr(node.operand))
         if op == "PLUS":
             return self._eval_expr(node.operand)
         if op == "NOT":
             return 1 if not self._eval_expr(node.operand) else 0
         if op == "BIT_NOT":
-            return self._int32(~self._eval_expr(node.operand))
+            return int32(~self._eval_expr(node.operand))
         if op == "INC":
             return self._eval_inc_dec(node.operand, 1)
         if op == "DEC":
@@ -516,13 +515,13 @@ class Interpreter:
         """
         if isinstance(target, Identifier):
             val = self.symtable.get_value(target.name)
-            new_val = self._int32(val + delta)
+            new_val = int32(val + delta)
             self.symtable.set_value(target.name, new_val)
             return new_val
         if isinstance(target, Deref):
             addr = self._eval_expr(target.pointer)
             val = self.memory.read(addr)
-            new_val = self._int32(val + delta)
+            new_val = int32(val + delta)
             self.memory.write(addr, new_val)
             return new_val
         if isinstance(target, ArrayAccess):
@@ -539,7 +538,7 @@ class Interpreter:
                 base = self.memory.read(symbol.addr)
                 addr = base + index
             val = self.memory.read(addr)
-            new_val = self._int32(val + delta)
+            new_val = int32(val + delta)
             if symbol.var_type == 'char':
                 self.memory.write_char(addr, new_val)
             else:
@@ -571,20 +570,20 @@ class Interpreter:
         if node.op != "ASSIGN":
             old = self._eval_lvalue_read(node.target)
             if node.op == "ADD_ASSIGN":
-                val = self._int32(old + val)
+                val = int32(old + val)
             elif node.op == "SUB_ASSIGN":
-                val = self._int32(old - val)
+                val = int32(old - val)
             elif node.op == "MUL_ASSIGN":
-                val = self._int32(old * val)
+                val = int32(old * val)
             elif node.op == "DIV_ASSIGN":
                 if val == 0:
                     raise RuntimeError("Runtime error: division by zero.")
-                val = self._int32(int(old / val))
+                val = int32(int(old / val))
             elif node.op == "MOD_ASSIGN":
                 if val == 0:
                     raise RuntimeError("Runtime error: division by zero.")
                 # C 語意：截斷除法，餘數符號與被除數相同
-                val = self._int32(old - int(old / val) * val)
+                val = int32(old - int(old / val) * val)
 
         self._eval_lvalue_write(node.target, val)
         return val
@@ -757,18 +756,3 @@ class Interpreter:
                 return base + index
         raise RuntimeError("Invalid & target")
 
-    # ── 工具方法 ──────────────────────────────────
-
-    def _int32(self, value: int) -> int:
-        """
-        將任意整數截斷為 32 位元有號整數範圍（-2^31 ～ 2^31-1）。
-        所有算術與位元運算的結果均經過此函式處理，模擬 C 的 int 溢位行為。
-
-        Args:
-            value (int): 要截斷的整數值。
-
-        Returns:
-            int: 截斷後的 32 位元有號整數。
-        """
-        value = int(value)
-        return ((value + 2**31) % 2**32) - 2**31

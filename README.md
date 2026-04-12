@@ -432,7 +432,7 @@ Interpreter.execute()  ← 樹狀走訪，直接執行
 | `interpreter.py` | `Interpreter`（AST 樹狀走訪直譯器）；包含 `BreakException`、`ContinueException`、`ReturnException` |
 | `symtable.py` | `SymbolTable`（作用域堆疊）+ `Symbol`（型別、位址、指標/陣列旗標） |
 | `memory.py` | `Memory`（線性記憶體空間）；提供 allocate / free_to / read / write / read_string / write_string |
-| `builtins_funcs.py` | `Builtins`；實作所有內建函式的分派與執行邏輯 |
+| `builtins_funcs.py` | `Builtins`；實作所有內建函式的分派與執行邏輯（提交時需更名為 `builtins.py`） |
 | `repl.py` | `ReplInputCollector`（多行輸入收集器）+ `REPL`（互動環境主體） |
 
 ---
