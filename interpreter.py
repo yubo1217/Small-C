@@ -212,16 +212,20 @@ class Interpreter:
         Args:
             node (Stmt): 要執行的陳述式節點。
         """
-        if self.trace:
+        if self.trace and not isinstance(node, Block):
             line = getattr(node, 'line', '?')
-            print(f"[line {line}] {node}")
+            print(f"[line {line}] {node.trace_repr()}")
 
         if isinstance(node, (VarDecl, ArrayDecl)):
             self.exec_decl(node)
 
         elif isinstance(node, Block):
-            for stmt in node.statements:
-                self.exec_stmt(stmt)
+            self.symtable.push_scope()
+            try:
+                for stmt in node.statements:
+                    self.exec_stmt(stmt)
+            finally:
+                self.symtable.pop_scope()
 
         elif isinstance(node, IfStmt):
             cond = self.eval_expr(node.condition)
@@ -344,7 +348,13 @@ class Interpreter:
             return addr
 
         elif isinstance(node, Identifier):
-            return self.symtable.get_value(node.name)
+            symbol = self.symtable.lookup(node.name)
+            if symbol is None:
+                raise RuntimeError(f"Runtime error: undefined variable '{node.name}'")
+            # 陣列名稱作為右值時，退化為指向首元素的指標（array decay）
+            if symbol.is_array:
+                return symbol.addr
+            return self.memory.read(symbol.addr)
 
         elif isinstance(node, BinOp):
             return self.eval_binop(node)
@@ -370,12 +380,18 @@ class Interpreter:
         elif isinstance(node, ArrayAccess):
             symbol = self.symtable.lookup(node.array.name)
             index = self.eval_expr(node.index)
-            if index < 0 or index >= symbol.array_size:
-                raise RuntimeError(
-                    f"Runtime error: array index out of bounds "
-                    f"(index {index}, size {symbol.array_size})."
-                )
-            return self.memory.read(symbol.addr + index)
+            if symbol.is_array:
+                # 真正的陣列：做 bounds check，直接用基底位址
+                if index < 0 or index >= symbol.array_size:
+                    raise RuntimeError(
+                        f"Runtime error: array index out of bounds "
+                        f"(index {index}, size {symbol.array_size})."
+                    )
+                return self.memory.read(symbol.addr + index)
+            else:
+                # 指標參數：讀取指標值作為基底位址，不做 bounds check
+                base = self.memory.read(symbol.addr)
+                return self.memory.read(base + index)
 
         raise RuntimeError(f"Unknown AST node: {type(node)}")
 
@@ -509,12 +525,16 @@ class Interpreter:
         if isinstance(target, ArrayAccess):
             symbol = self.symtable.lookup(target.array.name)
             index = self.eval_expr(target.index)
-            if index < 0 or index >= symbol.array_size:
-                raise RuntimeError(
-                    f"Runtime error: array index out of bounds "
-                    f"(index {index}, size {symbol.array_size})."
-                )
-            addr = symbol.addr + index
+            if symbol.is_array:
+                if index < 0 or index >= symbol.array_size:
+                    raise RuntimeError(
+                        f"Runtime error: array index out of bounds "
+                        f"(index {index}, size {symbol.array_size})."
+                    )
+                addr = symbol.addr + index
+            else:
+                base = self.memory.read(symbol.addr)
+                addr = base + index
             val = self.memory.read(addr)
             new_val = self._int32(val + delta)
             if symbol.var_type == 'char':
@@ -587,7 +607,11 @@ class Interpreter:
         if isinstance(node, ArrayAccess):
             symbol = self.symtable.lookup(node.array.name)
             index = self.eval_expr(node.index)
-            return self.memory.read(symbol.addr + index)
+            if symbol.is_array:
+                return self.memory.read(symbol.addr + index)
+            else:
+                base = self.memory.read(symbol.addr)
+                return self.memory.read(base + index)
         raise RuntimeError("Invalid assignment target")
 
     def eval_lvalue_write(self, node, val: int):
@@ -614,15 +638,21 @@ class Interpreter:
         elif isinstance(node, ArrayAccess):
             symbol = self.symtable.lookup(node.array.name)
             index = self.eval_expr(node.index)
-            if index < 0 or index >= symbol.array_size:
-                raise RuntimeError(
-                    f"Runtime error: array index out of bounds "
-                    f"(index {index}, size {symbol.array_size})."
-                )
-            if symbol.var_type == 'char':
-                self.memory.write_char(symbol.addr + index, val)
+            if symbol.is_array:
+                if index < 0 or index >= symbol.array_size:
+                    raise RuntimeError(
+                        f"Runtime error: array index out of bounds "
+                        f"(index {index}, size {symbol.array_size})."
+                    )
+                addr = symbol.addr + index
             else:
-                self.memory.write(symbol.addr + index, val)
+                # 指標參數：讀取指標值作為基底位址
+                base = self.memory.read(symbol.addr)
+                addr = base + index
+            if symbol.var_type == 'char':
+                self.memory.write_char(addr, val)
+            else:
+                self.memory.write(addr, val)
         else:
             raise RuntimeError("Invalid assignment target")
 
@@ -717,7 +747,11 @@ class Interpreter:
         if isinstance(target, ArrayAccess):
             symbol = self.symtable.lookup(target.array.name)
             index = self.eval_expr(target.index)
-            return symbol.addr + index
+            if symbol.is_array:
+                return symbol.addr + index
+            else:
+                base = self.memory.read(symbol.addr)
+                return base + index
         raise RuntimeError("Invalid & target")
 
     # ── 工具方法 ──────────────────────────────────

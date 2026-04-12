@@ -42,7 +42,7 @@ class Memory:
             size (int): 記憶體總大小（單元數），預設為 65536。
         """
         self.data = [0] * size
-        self.heap_top = 0
+        self.heap_top = 1  # 保留位址 0 作為 NULL，有效位址從 1 開始
 
     # ── 配置與釋放 ────────────────────────────────
 
@@ -176,4 +176,4 @@ class Memory:
         確保每次執行都從乾淨的狀態開始。
         """
         self.data = [0] * len(self.data)
-        self.heap_top = 0
+        self.heap_top = 1  # 保留位址 0 作為 NULL

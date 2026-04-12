@@ -45,6 +45,10 @@ from lexer import Lexer
 class AST:
     """所有 AST 節點的抽象基底類別。"""
 
+    def trace_repr(self) -> str:
+        """回傳供 TRACE 模式顯示的簡潔描述字串。預設使用 repr()。"""
+        return repr(self)
+
 
 # ─────────────────────────────────────────────
 # 運算式節點（Expressions）
@@ -251,6 +255,11 @@ class VarDecl(Stmt):
     def __repr__(self):
         return f"VarDecl({self.var_type}, {self.name}, {self.value}, pointer={self.is_pointer})"
 
+    def trace_repr(self):
+        ptr = '*' if self.is_pointer else ''
+        init = f" = {self.value}" if self.value is not None else ''
+        return f"{self.var_type} {ptr}{self.name}{init};"
+
 
 class ArrayDecl(Stmt):
     """
@@ -300,6 +309,9 @@ class Return(Stmt):
     def __repr__(self):
         return f"Return({self.value})"
 
+    def trace_repr(self):
+        return f"return {self.value};" if self.value is not None else "return;"
+
 
 class IfStmt(Stmt):
     """
@@ -318,6 +330,9 @@ class IfStmt(Stmt):
     def __repr__(self):
         return f"IfStmt({self.condition}, {self.then_branch}, {self.else_branch})"
 
+    def trace_repr(self):
+        return f"if ({self.condition})"
+
 
 class WhileStmt(Stmt):
     """
@@ -333,6 +348,9 @@ class WhileStmt(Stmt):
 
     def __repr__(self):
         return f"WhileStmt({self.condition}, {self.body})"
+
+    def trace_repr(self):
+        return f"while ({self.condition})"
 
 
 class DoWhileStmt(Stmt):
@@ -350,6 +368,9 @@ class DoWhileStmt(Stmt):
 
     def __repr__(self):
         return f"DoWhileStmt({self.body}, {self.condition})"
+
+    def trace_repr(self):
+        return f"do ... while ({self.condition})"
 
 
 class ForStmt(Stmt):
@@ -372,6 +393,9 @@ class ForStmt(Stmt):
     def __repr__(self):
         return f"ForStmt({self.init}, {self.condition}, {self.update}, {self.body})"
 
+    def trace_repr(self):
+        return f"for ({self.init}; {self.condition}; {self.update})"
+
 
 class BreakStmt(Stmt):
     """break 陳述式，跳出最近的迴圈。"""
@@ -379,12 +403,18 @@ class BreakStmt(Stmt):
     def __repr__(self):
         return "BreakStmt()"
 
+    def trace_repr(self):
+        return "break;"
+
 
 class ContinueStmt(Stmt):
     """continue 陳述式，跳至最近迴圈的下一次迭代。"""
 
     def __repr__(self):
         return "ContinueStmt()"
+
+    def trace_repr(self):
+        return "continue;"
 
 
 class SwitchStmt(Stmt):

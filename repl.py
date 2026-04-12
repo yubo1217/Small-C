@@ -498,8 +498,7 @@ class REPL:
             parser = Parser(source)
             program = parser.parse()
             ret = self.interpreter.execute(program)
-            if ret:
-                print(f"Program exited with return value {ret}.")
+            print(f"Program exited with return value {ret}.")
         except SystemExit as e:
             print(f"Program exited with return value {e.code}.")
         except Exception as e:
@@ -711,7 +710,10 @@ class REPL:
         用法：QUIT / EXIT
         """
         if self.modified:
-            ans = input("Buffer has unsaved changes. Discard and quit? (y/n): ").strip().lower()
+            try:
+                ans = input("Buffer has unsaved changes. Discard and quit? (y/n): ").strip().lower()
+            except EOFError:
+                ans = 'y'
             if ans != 'y':
                 return
         print("Goodbye.")
