@@ -39,6 +39,49 @@ from lexer import Lexer
 
 
 # ═══════════════════════════════════════════════════════════
+# 例外：詞法 / 語法錯誤
+# ═══════════════════════════════════════════════════════════
+
+class ParseError(Exception):
+    """
+    詞法或語法錯誤例外，攜帶結構化的行號與訊息。
+
+    REPL 視情境格式化此例外：
+      - 互動模式：印出 'Syntax error: <msg>'
+      - CHECK / RUN 緩衝區：印出 'Error at line <line>: <msg>'
+
+    Attributes:
+        msg  (str): 錯誤的人類可讀描述（不含「Syntax error:」等前綴）。
+        line (int): 錯誤發生的原始碼行號（1 起始；0 表示未知）。
+    """
+    def __init__(self, msg: str, line: int = 0):
+        super().__init__(msg)
+        self.msg = msg
+        self.line = line
+
+
+# Token 類型 → 使用者友善名稱對應表（供錯誤訊息使用）
+_KIND_NAME = {
+    "SEMI":     "';'",
+    "COMMA":    "','",
+    "LPAREN":   "'('",   "RPAREN":   "')'",
+    "LBRACE":   "'{'",   "RBRACE":   "'}'",
+    "LBRACKET": "'['",   "RBRACKET": "']'",
+    "COLON":    "':'",
+    "IDENT":    "identifier",
+    "NUMBER":   "number",
+    "STRING":   "string literal",
+    "CHAR":     "character literal",
+    "INT":      "'int'",
+    "CHAR":     "'char'",
+    "VOID":     "'void'",
+    "WHILE":    "'while'",
+    "IF":       "'if'",
+    "ELSE":     "'else'",
+}
+
+
+# ═══════════════════════════════════════════════════════════
 # AST 節點基底類別
 # ═══════════════════════════════════════════════════════════
 
@@ -46,8 +89,37 @@ class AST:
     """所有 AST 節點的抽象基底類別。"""
 
     def trace_repr(self) -> str:
-        """回傳供 TRACE 模式顯示的簡潔描述字串。預設使用 repr()。"""
-        return repr(self)
+        """回傳供 TRACE 模式顯示的簡潔描述字串。預設使用 source-like 字串。"""
+        return str(self)
+
+
+# ─────────────────────────────────────────────
+# 運算子文字對應表（供 __str__ 還原可讀的原始碼樣式輸出）
+# ─────────────────────────────────────────────
+
+_OP_TEXT = {
+    "PLUS": "+", "MINUS": "-", "MUL": "*", "DIV": "/", "MOD": "%",
+    "EQ": "==", "NEQ": "!=", "LT": "<", "GT": ">", "LTE": "<=", "GTE": ">=",
+    "AND": "&&", "OR": "||", "NOT": "!",
+    "BIT_AND": "&", "BIT_OR": "|", "BIT_XOR": "^", "BIT_NOT": "~",
+    "LSHIFT": "<<", "RSHIFT": ">>",
+    "ASSIGN": "=", "ADD_ASSIGN": "+=", "SUB_ASSIGN": "-=",
+    "MUL_ASSIGN": "*=", "DIV_ASSIGN": "/=", "MOD_ASSIGN": "%=",
+    "INC": "++", "DEC": "--",
+}
+
+
+def _esc(s: str) -> str:
+    """將字串中的特殊字元轉為 C 風格跳脫序列，供 trace 顯示用。"""
+    out = ''
+    for ch in s:
+        if ch == '\n':   out += '\\n'
+        elif ch == '\t': out += '\\t'
+        elif ch == '\\': out += '\\\\'
+        elif ch == '"':  out += '\\"'
+        elif ch == '\0': out += '\\0'
+        else:            out += ch
+    return out
 
 
 # ─────────────────────────────────────────────
@@ -79,6 +151,9 @@ class Number(Literal):
     def __repr__(self):
         return f"Number({self.value})"
 
+    def __str__(self):
+        return str(self.value)
+
 
 class Char(Literal):
     """
@@ -92,6 +167,9 @@ class Char(Literal):
 
     def __repr__(self):
         return f"Char('{self.value}')"
+
+    def __str__(self):
+        return f"'{_esc(self.value)}'"
 
 
 class StringLiteral(Literal):
@@ -107,6 +185,9 @@ class StringLiteral(Literal):
     def __repr__(self):
         return f"StringLiteral({self.value!r})"
 
+    def __str__(self):
+        return f'"{_esc(self.value)}"'
+
 
 class Identifier(Expr):
     """
@@ -120,6 +201,9 @@ class Identifier(Expr):
 
     def __repr__(self):
         return f"Identifier({self.name})"
+
+    def __str__(self):
+        return self.name
 
 
 class UnaryOp(Expr):
@@ -136,6 +220,9 @@ class UnaryOp(Expr):
 
     def __repr__(self):
         return f"UnaryOp({self.op}, {self.operand})"
+
+    def __str__(self):
+        return f"{_OP_TEXT.get(self.op, self.op)}{self.operand}"
 
 
 class BinOp(Expr):
@@ -155,6 +242,9 @@ class BinOp(Expr):
     def __repr__(self):
         return f"BinOp({self.left}, {self.op}, {self.right})"
 
+    def __str__(self):
+        return f"{self.left} {_OP_TEXT.get(self.op, self.op)} {self.right}"
+
 
 class AddressOf(PointerExpr):
     """
@@ -169,6 +259,9 @@ class AddressOf(PointerExpr):
     def __repr__(self):
         return f"AddressOf({self.target})"
 
+    def __str__(self):
+        return f"&{self.target}"
+
 
 class Deref(PointerExpr):
     """
@@ -182,6 +275,9 @@ class Deref(PointerExpr):
 
     def __repr__(self):
         return f"Deref({self.pointer})"
+
+    def __str__(self):
+        return f"*{self.pointer}"
 
 
 class Call(Expr):
@@ -199,6 +295,10 @@ class Call(Expr):
     def __repr__(self):
         return f"Call({self.name}, {self.args})"
 
+    def __str__(self):
+        args_str = ', '.join(str(a) for a in self.args)
+        return f"{self.name}({args_str})"
+
 
 class ArrayAccess(Expr):
     """
@@ -214,6 +314,9 @@ class ArrayAccess(Expr):
 
     def __repr__(self):
         return f"ArrayAccess({self.array}, {self.index})"
+
+    def __str__(self):
+        return f"{self.array}[{self.index}]"
 
 
 class Assignment(Expr):
@@ -233,6 +336,9 @@ class Assignment(Expr):
 
     def __repr__(self):
         return f"Assignment({self.target}, {self.op}, {self.value})"
+
+    def __str__(self):
+        return f"{self.target} {_OP_TEXT.get(self.op, self.op)} {self.value}"
 
 
 # ─────────────────────────────────────────────
@@ -299,6 +405,13 @@ class ArrayDecl(Decl):
 
     def __repr__(self):
         return f"ArrayDecl({self.var_type}, {self.name}, size={self.size}, value={self.value})"
+
+    def trace_repr(self):
+        if self.value is None:
+            init = ''
+        else:
+            init = ' = {' + ', '.join(str(v) for v in self.value) + '}'
+        return f"{self.var_type} {self.name}[{self.size}]{init};"
 
 
 class Block(Stmt):
@@ -460,6 +573,9 @@ class SwitchStmt(Stmt):
     def __repr__(self):
         return f"SwitchStmt({self.expr}, items={self.items})"
 
+    def trace_repr(self):
+        return f"switch ({self.expr})"
+
 
 class ExprStmt(Stmt):
     """
@@ -567,22 +683,24 @@ class Parser:
             kind (str): 預期的 Token 類型。
 
         Raises:
-            Exception: Token 類型不符或遇到 ERROR Token 時。
+            ParseError: Token 類型不符或遇到 ERROR Token 時。
         """
         if self.current_token.kind == "ERROR":
-            raise Exception(
-                f"Lexical error at line {self.current_token.line}: "
-                f"{self.current_token.value}."
+            raise ParseError(
+                str(self.current_token.value) + ".",
+                line=self.current_token.line
             )
         if self.current_token.kind == kind:
             self.pos += 1
             if self.pos < len(self.tokens):
                 self.current_token = self.tokens[self.pos]
         else:
-            raise Exception(
-                f"Syntax error at line {self.current_token.line}: "
-                f"unexpected token '{self.current_token.value}', "
-                f"expected '{kind}'."
+            tok = self.current_token
+            tok_str = "end of input" if tok.kind == "EOF" else f"'{tok.value}'"
+            friendly = _KIND_NAME.get(kind, f"'{kind}'")
+            raise ParseError(
+                f"unexpected token {tok_str}, expected {friendly}.",
+                line=tok.line
             )
 
     def _peek(self):
@@ -710,6 +828,13 @@ class Parser:
         # 一般運算式陳述式（以分號結尾），包裝為 ExprStmt 維持 list[Stmt] 型別合約
         line = tok.line
         expr = self._expr()
+        if self.current_token.kind != "SEMI":
+            # 自訂錯誤訊息與行號：行號指向運算式起始處（而非後續 token），
+            # 並使用 spec 規定的措辭「expected ';' after expression statement.」。
+            raise ParseError(
+                "expected ';' after expression statement.",
+                line=line
+            )
         self._eat("SEMI")
         node = ExprStmt(expr)
         node.line = line
@@ -782,6 +907,13 @@ class Parser:
             self._eat("ASSIGN")
             value = self._expr()
 
+        if self.current_token.kind != "SEMI":
+            # 自訂錯誤訊息與行號：行號指向宣告起始處（型別關鍵字所在行），
+            # 訊息措辭與 ExprStmt 的版本對齊。
+            raise ParseError(
+                "expected ';' after declaration.",
+                line=line
+            )
         self._eat("SEMI")
         node = VarDecl(var_type, name, value, is_pointer)
         node.line = line
@@ -816,6 +948,11 @@ class Parser:
                     value.append(self._expr())
             self._eat("RBRACE")
 
+        if self.current_token.kind != "SEMI":
+            raise ParseError(
+                "expected ';' after declaration.",
+                line=line
+            )
         self._eat("SEMI")
         node = ArrayDecl(var_type, name, size, value)
         node.line = line
@@ -907,9 +1044,9 @@ class Parser:
                     val = ord(self.current_token.value)
                     self._eat("CHAR")
                 else:
-                    raise Exception(
-                        f"Syntax error at line {self.current_token.line}: "
-                        f"case value must be an integer or character constant."
+                    raise ParseError(
+                        "case value must be an integer or character constant.",
+                        line=self.current_token.line
                     )
                 self._eat("COLON")
                 stmts = []
@@ -932,9 +1069,9 @@ class Parser:
                 items.append((None, stmts))  # None 代表 default 分支
 
             else:
-                raise Exception(
-                    f"Syntax error at line {self.current_token.line}: "
-                    f"expected 'case' or 'default' in switch statement."
+                raise ParseError(
+                    "expected 'case' or 'default' in switch statement.",
+                    line=self.current_token.line
                 )
 
         self._eat("RBRACE")
@@ -1229,6 +1366,8 @@ class Parser:
             self._eat("RPAREN")
             return node
 
-        raise Exception(
-            f"Syntax error at line {tok.line}: unexpected token '{tok.value}'."
+        tok_str = "end of input" if tok.kind == "EOF" else f"'{tok.value}'"
+        raise ParseError(
+            f"unexpected token {tok_str}, expected expression.",
+            line=tok.line
         )

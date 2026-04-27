@@ -67,11 +67,13 @@ Two spec documents live in `docs/`:
 - **`ABOUT`** shows name/version/author/semester — already implemented.
 - **Grading rubric (100 + 15 bonus)**: Lex/Parse 25 · Semantic/Exec 30 · REPL 20 · Quality/Docs 15 · Bonus (switch/case 5, runtime errors 5, #define 5).
 
-### Remaining spec gaps (fix before submission)
+### Resolved spec gaps
 
-1. **File name mismatch** — `builtins_funcs.py` must be renamed to `builtins.py` and the import in `interpreter.py` updated accordingly.
-2. **Block-local var decls accepted** — `parser.py` `_block()` calls `_var_decl()` anywhere in a block. Spec only allows declarations at function start. Either tighten parser or document as intentional leniency.
-3. **Error message wording** — audit exact punctuation against spec examples:
-   - `Runtime error: division by zero.`
-   - `Runtime error: array index out of bounds (index 10, size 5).`
-   - `Runtime error: sqrt() argument must be non-negative.`
+1. **File name** — `builtins.py` is the spec-suggested name. It clashes with Python's stdlib `builtins`, so `interpreter.py` loads it via `importlib.util.spec_from_file_location` to bypass the stdlib shadow.
+2. **Block-local var decls accepted** — `parser.py` `_block()` calls `_var_decl()` anywhere in a block. Spec only allows declarations at function start. Documented as intentional leniency; do not "fix".
+3. **Error message wording** — `parser.py` raises a structured `ParseError(msg, line)`. REPL formats based on context:
+   - Interactive single-line input → `Syntax error: <msg>`
+   - `CHECK` / `RUN` on the buffer → `Error at line N: <msg>`
+   - Runtime errors → `Runtime error: <msg>` (no "Error: " prefix)
+   - The wordings `expected expression.` and `expected ';' after expression statement.` / `expected ';' after declaration.` match spec example 16.
+4. **TRACE output** — every `Expr` node defines `__str__` that reconstructs source-like text (e.g., `result = gcd(48, 18);`). Don't fall back to `__repr__` for trace.

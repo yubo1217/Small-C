@@ -28,7 +28,7 @@ Usage:
 import os
 import sys
 from lexer import Lexer, preprocess
-from parser import Parser, IfStmt
+from parser import Parser, IfStmt, ParseError
 from interpreter import Interpreter
 
 
@@ -192,10 +192,10 @@ class REPL:
           - 初始狀態顯示 "sc> "。
           - 輸入跨行時顯示 "  > " 表示等待續行。
         """
-        print("=" * 42)
-        print("  Small-C Interactive Interpreter v1.0")
-        print("  System Software Final Project, Spring 2026")
-        print("=" * 42)
+        print("=" * 44)
+        print(" Small-C Interactive Interpreter v1.0")
+        print(" System Software Final Project, Spring 2026")
+        print("=" * 44)
         print("Type `HELP` for a list of commands.")
         print()
 
@@ -258,7 +258,7 @@ class REPL:
                     try:
                         prog = Parser(preprocess(source)).parse()
                         last = prog.decls[-1] if prog.decls else None
-                        if isinstance(last, IfStmt) and last.else_body is None:
+                        if isinstance(last, IfStmt) and last.else_branch is None:
                             pending_source = source
                         else:
                             self._execute_interactive(source)
@@ -272,6 +272,12 @@ class REPL:
         對單段原始碼進行前處理、解析並直接執行（互動模式）。
         執行期間的錯誤與程式終止均捕捉後印出訊息，不中斷 REPL 迴圈。
 
+        錯誤訊息格式：
+          - 詞法 / 語法錯誤：'Syntax error: <msg>'（不含行號，符合 spec 範例 16）
+          - 執行期錯誤：訊息已自帶 'Runtime error: ' 前綴則原樣輸出，
+                      否則加上前綴後輸出
+          - 其他例外：以通用 'Error: <msg>' 顯示
+
         Args:
             source (str): 要執行的 Small-C 原始碼字串。
         """
@@ -282,8 +288,23 @@ class REPL:
             self.interpreter.execute_interactive(program)
         except SystemExit as e:
             print(f"Program exited with return value {e.code}.")
+        except ParseError as e:
+            print(f"Syntax error: {e.msg}")
+        except RuntimeError as e:
+            print(self._format_runtime(e))
         except Exception as e:
             print(f"Error: {e}")
+
+    @staticmethod
+    def _format_runtime(e: Exception) -> str:
+        """
+        將執行期錯誤訊息標準化為 'Runtime error: <msg>' 格式。
+        若訊息已自帶相符前綴則原樣返回，避免重複加註。
+        """
+        msg = str(e)
+        if msg.startswith("Runtime error:"):
+            return msg
+        return f"Runtime error: {msg}"
 
     # ── 環境指令分派 ──────────────────────────────
 
@@ -524,6 +545,10 @@ class REPL:
         執行前會重置直譯器狀態，並套用目前的 TRACE 設定。
         執行結果與錯誤訊息均印出後回到提示符。
 
+        錯誤訊息格式：
+          - 詞法 / 語法錯誤：'Error at line <n>: <msg>'（緩衝區行號有意義）
+          - 執行期錯誤：'Runtime error: <msg>'
+
         用法：RUN
         """
         if not self.buffer:
@@ -540,13 +565,18 @@ class REPL:
             print(f"Program exited with return value {ret}.")
         except SystemExit as e:
             print(f"Program exited with return value {e.code}.")
+        except ParseError as e:
+            print(f"Error at line {e.line}: {e.msg}")
+        except RuntimeError as e:
+            print(self._format_runtime(e))
         except Exception as e:
             print(f"Error: {e}")
 
     def _cmd_check(self):
         """
         對緩衝區中的程式碼進行語法檢查，不實際執行。
-        若有語法錯誤，印出所有錯誤訊息與總數；無錯誤時印出確認訊息。
+        若有語法錯誤，依照 spec 範例 16 的格式輸出 'Error at line <n>: <msg>'。
+        無錯誤時印出 'No errors found.'。
 
         用法：CHECK
         """
@@ -559,8 +589,10 @@ class REPL:
             source = preprocess(source)
             parser = Parser(source)
             parser.parse()
+        except ParseError as e:
+            errors.append(f"Error at line {e.line}: {e.msg}")
         except Exception as e:
-            errors.append(str(e))
+            errors.append(f"Error: {e}")
 
         if errors:
             for err in errors:
@@ -623,7 +655,8 @@ class REPL:
             else:
                 val = self.interpreter.memory.read(symbol.addr)
                 if symbol.var_type == 'char':
-                    print(f"  char {name} = {val} ({chr(val) if 32 <= val <= 126 else '?'})")
+                    ch_repr = f"'{chr(val)}'" if 32 <= val <= 126 else "'?'"
+                    print(f"  char {name} = {val} ({ch_repr})")
                 else:
                     print(f"  int {name} = {val}")
 

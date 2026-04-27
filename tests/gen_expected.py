@@ -9,8 +9,17 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
 from lexer import preprocess
-from parser import Parser
+from parser import Parser, ParseError
 from interpreter import Interpreter
+
+
+def _format_runtime(e: Exception) -> str:
+    """執行期錯誤訊息標準化，與 REPL._format_runtime 同步。"""
+    msg = str(e)
+    if msg.startswith("Runtime error:"):
+        return msg
+    return f"Runtime error: {msg}"
+
 
 def run_sc(path: str) -> str:
     """執行一個 .sc 檔案，回傳全部標準輸出（含錯誤訊息）。"""
@@ -30,6 +39,10 @@ def run_sc(path: str) -> str:
         print(f"Program exited with return value {ret}.")
     except SystemExit as e:
         print(f"Program exited with return value {e.code}.")
+    except ParseError as e:
+        print(f"Error at line {e.line}: {e.msg}")
+    except RuntimeError as e:
+        print(_format_runtime(e))
     except Exception as e:
         print(f"Error: {e}")
     finally:

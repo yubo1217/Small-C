@@ -1,1 +1,1 @@
-Error: Syntax error at line 9: unexpected token 'int', expected 'SEMI'.
+Error at line 8: expected ';' after declaration.

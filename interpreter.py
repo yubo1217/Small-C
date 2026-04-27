@@ -34,7 +34,21 @@ from parser import (
 )
 from symtable import SymbolTable
 from memory import Memory, int32
-from builtins_funcs import Builtins
+
+# 載入本目錄下的 builtins.py。由於 Python 標準函式庫已存在同名的內建模組，
+# 一般 import 會優先取得 stdlib 版本；此處改用 importlib.util 直接以檔案路徑載入，
+# 確保引用的是 Small-C 解譯器專屬的 Builtins 類別。
+import importlib.util as _ilu
+import os as _os
+
+_builtins_path = _os.path.join(
+    _os.path.dirname(_os.path.abspath(__file__)), 'builtins.py'
+)
+_spec = _ilu.spec_from_file_location('smallc_builtins', _builtins_path)
+_module = _ilu.module_from_spec(_spec)
+_spec.loader.exec_module(_module)
+Builtins = _module.Builtins
+del _ilu, _os, _builtins_path, _spec, _module
 
 
 # ─────────────────────────────────────────────
