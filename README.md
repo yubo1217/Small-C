@@ -342,12 +342,23 @@ switch (x) {
 
 所有錯誤均捕捉於 REPL 層，印出訊息後回到 `sc>` 提示符，解譯器不崩潰。
 
-### 7.1 語法錯誤
+### 7.1 語法 / 詞法錯誤
 
+錯誤訊息格式依執行情境不同：
+
+| 情境 | 格式 |
+|------|------|
+| 互動模式（直接輸入） | `Syntax error: <msg>` |
+| `CHECK` / `RUN` 緩衝區模式 | `Error at line N: <msg>` |
+
+範例：
 ```
-Syntax error at line 3: unexpected token ';', expected expression.
-Lexical error at line 5: unterminated string literal.
+Syntax error: unexpected token ';', expected expression.
+Error at line 3: unexpected token ';', expected expression.
+Error at line 5: Unterminated string literal.
 ```
+
+詞法錯誤（例如未閉合的字串、非法字元、非法跳脫序列）同樣包裝成 `ParseError` 並以相同格式輸出。
 
 ### 7.2 執行期錯誤
 
@@ -355,16 +366,23 @@ Lexical error at line 5: unterminated string literal.
 |---------|---------|
 | 除以零 | `Runtime error: division by zero.` |
 | 陣列索引越界 | `Runtime error: array index out of bounds (index 10, size 5).` |
+| 空指標解參考 | `Runtime error: null pointer dereference` |
+| 左移次數為負 | `Runtime error: left shift count is negative.` |
+| 右移次數為負 | `Runtime error: right shift count is negative.` |
 | `sqrt()` 引數為負 | `Runtime error: sqrt() argument must be non-negative.` |
 | 記憶體不足 | `Runtime error: Out of memory` |
 | 記憶體存取越界 | `Runtime error: Memory access out of bounds: address N` |
 | 函式參數數量錯誤 | 執行期錯誤，顯示函式名稱與期望/實際參數數量 |
 
-### 7.3 互動模式的 `exit()` 呼叫
+### 7.3 程式結束
+
+緩衝區 `RUN` 時 `main()` 正常返回或呼叫 `exit()`，均輸出：
 
 ```
 Program exited with return value N.
 ```
+
+互動模式下呼叫 `exit()` 同樣輸出上述訊息，並不影響 REPL 繼續運作。
 
 ---
 
@@ -432,7 +450,7 @@ Interpreter.execute()  ← 樹狀走訪，直接執行
 | `interpreter.py` | `Interpreter`（AST 樹狀走訪直譯器）；包含 `BreakException`、`ContinueException`、`ReturnException` |
 | `symtable.py` | `SymbolTable`（作用域堆疊）+ `Symbol`（型別、位址、指標/陣列旗標） |
 | `memory.py` | `Memory`（線性記憶體空間）；提供 allocate / free_to / read / write / read_string / write_string |
-| `builtins_funcs.py` | `Builtins`；實作所有內建函式的分派與執行邏輯（提交時需更名為 `builtins.py`） |
+| `builtins.py` | `Builtins`；實作所有內建函式的分派與執行邏輯 |
 | `repl.py` | `ReplInputCollector`（多行輸入收集器）+ `REPL`（互動環境主體） |
 
 ---
