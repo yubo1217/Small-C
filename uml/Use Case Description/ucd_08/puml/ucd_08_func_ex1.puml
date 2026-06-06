@@ -1,0 +1,11 @@
+@startsalt
+{
+  使用案例：UC08 函式呼叫 | 情節類型：例外情節 1 — 呼叫未定義的函式
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：開發者在程式中呼叫 foo()，執行程式 | 2. 直譯器在使用者函式定義表中查找 foo，未找到
+    . | 3. 直譯器查找內建函式分派表（Builtins），也未找到
+    . | 4. TUCEW：系統顯示「Runtime error: undefined function 'foo'」，停止執行
+  }
+}
+@endsalt

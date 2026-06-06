@@ -1,0 +1,13 @@
+@startsalt
+{
+  使用案例：UC07 while 迴圈正常執行並以 break 跳出 | 情節類型：正常情節
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：開發者撰寫含 while 與 break 的程式並執行 | 2. 直譯器進入 while 節點，對迴圈條件求值
+    . | 3. 條件成立（非零），直譯器執行迴圈本體
+    . | 4. 直譯器遇到 break 語句，拋出 BreakException
+    . | 5. while 迴圈捕獲 BreakException，正常結束迴圈
+    . | 6. TUCEW：直譯器繼續執行迴圈之後的程式碼
+  }
+}
+@endsalt

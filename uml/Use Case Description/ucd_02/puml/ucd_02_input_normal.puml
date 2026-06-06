@@ -1,0 +1,12 @@
+@startsalt
+{
+  使用案例：UC02 LOAD 載入外部程式檔案 | 情節類型：正常情節
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：使用者輸入 LOAD hello.c | 2. 系統於檔案系統中搜尋 hello.c
+    . | 3. 系統讀取檔案內容，載入緩衝區
+    . | 4. 系統顯示「Loaded X lines from hello.c」
+    5. 使用者輸入 LIST 確認載入內容 | 6. TUCEW：系統逐行列出緩衝區所有程式碼
+  }
+}
+@endsalt

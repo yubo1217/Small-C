@@ -1,0 +1,11 @@
+@startsalt
+{
+  使用案例：UC02 SAVE 儲存程式至檔案 | 情節類型：例外情節 2 — 檔案無法寫入
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：使用者輸入程式碼後輸入 SAVE /root/out.c | 2. 系統嘗試開啟 /root/out.c 進行寫入
+    . | 3. 系統因權限不足，開啟失敗
+    . | 4. TUCEW：系統顯示「Cannot write to file: /root/out.c」錯誤訊息，緩衝區不變
+  }
+}
+@endsalt

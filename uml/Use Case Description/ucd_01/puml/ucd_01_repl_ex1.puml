@@ -1,0 +1,11 @@
+@startsalt
+{
+  使用案例：UC01 啟動 REPL | 情節類型：例外情節 1 — 輸入未知 REPL 指令
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：使用者執行 python main.py | 2. 系統初始化，顯示 sc> 提示字元
+    3. 使用者輸入未知指令（如 COMPILE） | 4. 系統解析輸入，找不到對應指令
+    . | 5. TUCEW：系統顯示「Unknown command: COMPILE」錯誤訊息，繼續等待輸入
+  }
+}
+@endsalt

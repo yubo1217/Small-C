@@ -1,0 +1,13 @@
+@startsalt
+{
+  使用案例：UC06 宣告並初始化整數變數 | 情節類型：正常情節
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：開發者撰寫 int x = 10; 並執行 | 2. Lexer 將程式碼分詞為 Token 序列
+    . | 3. Parser 識別變數宣告語法，建立 VarDecl AST 節點
+    . | 4. 直譯器在 SymbolTable 中新增符號 x
+    . | 5. Memory.allocate() 為 x 配置一個記憶體單元
+    . | 6. TUCEW：直譯器將初始值 10 經 int32() 截斷後寫入記憶體
+  }
+}
+@endsalt

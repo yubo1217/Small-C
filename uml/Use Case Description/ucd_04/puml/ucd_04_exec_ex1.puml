@@ -1,0 +1,12 @@
+@startsalt
+{
+  使用案例：UC04 RUN 執行 Small-C 程式 | 情節類型：例外情節 1 — 語法錯誤
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：使用者輸入 RUN | 2. 系統取出緩衝區程式碼，送入 Lexer 分詞
+    . | 3. Parser 解析時發現缺少分號（語法錯誤）
+    . | 4. Parser 拋出 ParseError，回報錯誤位置
+    . | 5. TUCEW：系統顯示「Error at line 5: expected ';' after expression statement.」
+  }
+}
+@endsalt

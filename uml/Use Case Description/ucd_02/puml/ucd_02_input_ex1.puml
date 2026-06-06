@@ -1,0 +1,11 @@
+@startsalt
+{
+  使用案例：UC02 LOAD 載入外部程式檔案 | 情節類型：例外情節 1 — 檔案不存在
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：使用者輸入 LOAD notexist.c | 2. 系統於檔案系統中搜尋 notexist.c
+    . | 3. 系統找不到指定檔案
+    . | 4. TUCEW：系統顯示「File not found: notexist.c」錯誤訊息，緩衝區不變
+  }
+}
+@endsalt

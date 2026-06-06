@@ -1,0 +1,11 @@
+@startsalt
+{
+  使用案例：UC06 宣告變數 | 情節類型：例外情節 1 — 重複宣告同名變數
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：開發者撰寫 int x = 5;（x 已存在於符號表）並執行 | 2. Lexer 分詞，Parser 建立 VarDecl AST 節點
+    . | 3. 直譯器在 SymbolTable 中查找符號 x，發現已存在
+    . | 4. TUCEW：系統顯示「Runtime error: variable 'x' already declared in this scope」
+  }
+}
+@endsalt

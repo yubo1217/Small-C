@@ -1,0 +1,13 @@
+@startsalt
+{
+  使用案例：UC04 RUN 執行 Small-C 程式 | 情節類型：例外情節 2 — 執行期錯誤（除以零）
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：使用者輸入 RUN | 2. 系統成功完成語法解析，生成 AST
+    . | 3. 直譯器開始走訪 AST 執行程式
+    . | 4. 執行到除法運算，發現除數為零
+    . | 5. 直譯器拋出執行期例外
+    . | 6. TUCEW：系統顯示「Runtime error: division by zero」，停止執行
+  }
+}
+@endsalt

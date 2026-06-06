@@ -1,0 +1,12 @@
+@startsalt
+{
+  使用案例：UC07 switch-case fall-through | 情節類型：例外情節 2 — case 缺少 break 導致貫穿
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：開發者撰寫 switch(x)，case 間無 break，並執行 | 2. 直譯器進入 switch 節點，對 x 求值（x = 1）
+    . | 3. 直譯器配對到 case 1，執行該 case 程式碼
+    . | 4. 系統未遇到 break，繼續往下執行 case 2 程式碼（fall-through）
+    . | 5. TUCEW：系統依序執行所有後續 case 直到遇見 break 或 switch 結束
+  }
+}
+@endsalt

@@ -1,0 +1,11 @@
+@startsalt
+{
+  使用案例：UC03 INSERT 插入新行 | 情節類型：例外情節 2 — 行號格式非法
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：使用者輸入 INSERT abc （行號非數字） | 2. 系統解析指令參數，嘗試將 abc 轉換為整數
+    . | 3. 系統發現參數格式非法，無法轉換
+    . | 4. TUCEW：系統顯示「Usage: INSERT <line_number>」用法提示，緩衝區不變
+  }
+}
+@endsalt

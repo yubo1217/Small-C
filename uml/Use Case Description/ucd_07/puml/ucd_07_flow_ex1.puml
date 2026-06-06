@@ -1,0 +1,11 @@
+@startsalt
+{
+  使用案例：UC07 控制流程 | 情節類型：例外情節 1 — break 出現在迴圈外部
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：開發者在函式頂層撰寫 break; 並執行 | 2. 直譯器執行 break 語句，拋出 BreakException
+    . | 3. BreakException 向上傳播，無任何 while/for/switch 捕獲
+    . | 4. TUCEW：系統顯示「Runtime error: 'break' outside loop」，停止執行
+  }
+}
+@endsalt

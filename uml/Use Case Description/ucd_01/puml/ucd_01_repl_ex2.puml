@@ -1,0 +1,11 @@
+@startsalt
+{
+  使用案例：UC01 啟動 REPL | 情節類型：例外情節 2 — 空緩衝區執行 RUN
+  {#
+    **Actor 動作** | **系統回應**
+    1. TUCBW：使用者執行 python main.py | 2. 系統初始化，顯示 sc> 提示字元
+    3. 使用者未輸入任何程式碼，直接輸入 RUN | 4. 系統檢查緩衝區，發現內容為空
+    . | 5. TUCEW：系統顯示「No program loaded」錯誤訊息，返回提示字元
+  }
+}
+@endsalt
