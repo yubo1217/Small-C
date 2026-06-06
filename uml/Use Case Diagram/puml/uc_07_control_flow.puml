@@ -1,0 +1,33 @@
+@startuml uc_07_control_flow
+skinparam dpi 300
+title UC07 - 控制流程
+
+left to right direction
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
+  ActorBorderColor black
+  FontSize 13
+}
+
+actor 開發者
+
+rectangle "控制流程" {
+  usecase "控制程式流程" as ROOT
+  usecase "條件判斷\n(if / else)" as IF
+  usecase "迴圈執行" as LOOP
+  usecase "switch 多路分支\n(case / default)" as SW
+  usecase "while 迴圈" as WHILE
+  usecase "for 迴圈" as FOR
+  usecase "do-while 迴圈" as DOWHILE
+  usecase "布林條件求值" as BOOL
+  usecase "提前跳出或繼續\n(break / continue)" as BREAK
+}
+
+開發者 --> ROOT
+
+BREAK ..> LOOP : <<extend>>\n{遇到 break / continue}
+
+note right of BREAK : 條件: {遇到 break 或 continue 語句}\n延伸點: 跳出或繼續
+
+@enduml

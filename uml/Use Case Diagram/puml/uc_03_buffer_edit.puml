@@ -1,0 +1,36 @@
+@startuml uc_03_buffer_edit
+skinparam dpi 300
+title UC03 - 緩衝區編輯
+
+left to right direction
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
+  ActorBorderColor black
+  FontSize 13
+}
+
+actor 使用者
+
+rectangle "緩衝區編輯" {
+  usecase "編輯程式緩衝區" as ROOT
+  usecase "LIST 顯示清單" as UC1
+  usecase "EDIT 修改行" as UC2
+  usecase "DELETE 刪除行" as UC3
+  usecase "INSERT 插入行" as UC4
+  usecase "定位指定行" as UC5
+  usecase "CLEAR 清除畫面" as UC6
+}
+
+使用者 --> UC1
+使用者 --> UC2
+使用者 --> UC3
+使用者 --> UC4
+使用者 --> UC6
+
+UC2 ..> UC5 : <<include>>
+UC3 ..> UC5 : <<include>>
+
+note bottom of UC6 : 清除終端機畫面，\n不影響緩衝區內容
+
+@enduml

@@ -1,0 +1,57 @@
+@startuml glossary
+title Small-C 互動式解譯器專案 — 完整詞彙表\nSpring 2026 系統軟體期末專題
+
+skinparam dpi 300
+skinparam {
+  BackgroundColor white
+  FontColor black
+  TitleFontSize 14
+  TitleFontColor black
+  LegendBackgroundColor white
+  LegendBorderColor black
+  LegendFontColor black
+  LegendFontSize 11
+}
+
+hide empty members
+hide @unlinked
+
+legend
+<#white,#black>|= <b>詞彙 / Term</b> |= <b>定義 / Definition</b> |= <b>備註 / Notes</b> |
+| <b>▌ 一、直譯器核心技術</b> |||
+| <b>Token</b>\n(Lexical Token) | Lexer 輸出的最小語義單位，包含 kind（類型）、value（值）、line（行號）。 | 定義於 lexer.py；\nkind 例：'INT', 'IDENT', 'EOF'。 |
+| <b>Lexer</b>\n(Lexical Analyzer) | 將原始碼字串逐字元掃描，產生 Token 串流。雙字元運算子優先比對，避免 == 被誤解為兩個 =。 | lexer.py：Lexer.tokenize()；\n管線第一站。 |
+| <b>preprocess()</b>\n(Preprocessor) | 展開無參數的 #define 巨集，採識別字邊界比對，避免誤替換識別字子字串。 | 不支援函式型巨集；\n定義於 lexer.py 模組層級。 |
+| <b>Parser</b>\n(Recursive-descent Parser) | 消費 Token 串流，以遞迴下降法建構 AST。\n優先序：賦值→邏輯→位元→比較→移位→加法→乘法→一元→基本。 | parser.py；上半定義 AST 節點，\n下半為 Parser 類別。 |
+| <b>AST</b>\n(Abstract Syntax Tree) | Parser 輸出的樹狀資料結構，每個節點代表一個語法構造（表達式、陳述式、函式定義等）。 | 節點層次：Program → FuncDef\n→ Stmt → Expr。 |
+| <b>Interpreter</b>\n(Tree-walking Interpreter) | 走訪 AST 節點並立即執行。execute() 執行完整程式（需 main()），execute_interactive() 供 REPL 使用。 | interpreter.py；控制流以\nPython 例外實作。 |
+| <b>REPL</b>\n(Read-Eval-Print Loop) | 互動式讀取-求值-輸出迴圈，提示符 sc>，使用者可即時輸入 Small-C 程式碼或 REPL 指令。 | repl.py；支援多行函式輸入\n（ReplInputCollector 追蹤括號深度）。 |
+| <b>ReplInputCollector</b> | 追蹤大括號深度與字串／注解狀態，跨行收集多行函式定義，直到輸入完整後才交給 Parser 處理。 | repl.py；解決 REPL 換行\n輸入的分批解析問題。 |
+| <b>▌ 二、記憶體與符號管理</b> |||
+| <b>Memory</b> | 65536 個整數儲存格組成的線性陣列，透過 bump allocator（heap_top）管理，模擬 C 語言的記憶體空間。 | memory.py；write() 呼叫 int32()；\nwrite_char() 截 8 位元。 |
+| <b>int32()</b>\n(32-bit Integer Truncation) | 模組層級工具函式，將任意整數截斷為帶號 32 位元整數範圍（−2³¹ ~ 2³¹−1），模擬 C 的 int 溢位行為。 | memory.py 定義；Interpreter\n與 Builtins 均匯入使用。 |
+| <b>heap_top</b>\n(Bump Allocator Pointer) | Memory 的分配指標，allocate() 向上推進配置新空間，free_to() 向下回捲釋放函式呼叫的局部變數。 | 函式返回時呼叫 free_to()\n回收該次呼叫配置的所有局部變數。 |
+| <b>SymbolTable</b> | 作用域堆疊（scope stack）：scopes[0] 為全域永久作用域，每次函式呼叫推入新 scope，返回時彈出。 | symtable.py；lookup() 由內向\n外搜尋，實現 C 語言的名稱遮蔽。 |
+| <b>Symbol</b> | 符號表中的記錄，儲存變數的類型（type）、記憶體位址（address）、is_pointer、is_array、array_size 等屬性。 | 名稱→Symbol 映射；\n實際讀寫值委由 Memory 執行。 |
+| <b>Scope</b>\n(Lexical Scope) | 名稱可見的語彙範圍，Small-C 以函式為單位；內層作用域的同名變數會遮蔽（shadow）外層變數。 | 塊作用域（block-local）宣告\n被寬容支援，但規格未要求。 |
+| <b>▌ 三、控制流與內建功能</b> |||
+| <b>BreakException</b>\n(Control-flow Exception) | Python 例外，用於實作 Small-C 的 break 陳述式，由最近的迴圈或 switch 捕捉並中止執行。 | interpreter.py；以例外實作\n控制流是本專案的設計決策。 |
+| <b>ContinueException</b> | Python 例外，用於實作 Small-C 的 continue 陳述式，由最近的迴圈捕捉並跳至下一次迭代。 | 不可「修正」此設計——\n是刻意的架構選擇。 |
+| <b>ReturnException</b> | Python 例外，攜帶返回值，用於實作 Small-C 的 return 陳述式，由函式呼叫點捕捉。 | 與 BreakException /\nContinueException 同為設計原則。 |
+| <b>Builtins</b> | 透過 _dispatch 字典分派的內建函式集合（如 printf、scanf），接收已求值的整數引數，字串引數為記憶體位址。 | builtins.py；以 importlib\n載入以繞過 stdlib 名稱衝突。 |
+| <b>▌ 四、REPL 指令集</b> |||
+| <b>LOAD / RUN</b> | LOAD <file> 將 .sc 或 .c 檔案內容載入行緩衝區；RUN 執行緩衝區中的完整程式（需有 main() 函式）。 | 指令不分大小寫；\nRUN 前可用 CHECK 驗證語法。 |
+| <b>CHECK</b> | 僅對緩衝區內容執行語法分析（Parse），不執行程式，回報語法錯誤格式為 Error at line N: <msg>。 | 錯誤訊息格式與單行互動模式\n（Syntax error:）不同。 |
+| <b>TRACE ON / OFF</b> | 開啟或關閉執行追蹤模式，開啟後每執行一個 AST 節點前印出 [line n] <statement>。 | 每個 Expr 節點定義 __str__\n還原原始碼格式供追蹤輸出。 |
+| <b>VARS / FUNCS</b> | VARS 顯示當前所有變數及其值；FUNCS 列出使用者定義的函式名稱與行號，便於除錯。 | 評分標準要求 FUNCS 顯示\n行號資訊。 |
+| <b>LIST / EDIT / INSERT\nDELETE / APPEND</b> | 緩衝區管理指令：LIST 顯示行號與內容；EDIT/INSERT/DELETE 修改特定行；APPEND 追加一行。 | 模擬簡易行編輯器，\n可在 REPL 直接修改程式。 |
+| <b>SAVE / NEW / CLEAR</b> | SAVE <file> 將緩衝區寫入檔案；NEW / CLEAR 清空緩衝區與符號表，開始新的程式。 | CLEAR 同時重置符號表；\nQUIT / EXIT 離開 REPL。 |
+| <b>ABOUT</b> | 顯示直譯器的名稱、版本、作者與學期資訊，提供系統識別與版本追蹤。 | 評分標準中明確要求；\n已實作於 repl.py。 |
+| <b>▌ 五、Small-C 支援語言特性</b> |||
+| <b>#define 巨集</b>\n(Parameter-less Macro) | 無參數的 C 前置處理巨集，在詞法分析前由 preprocess() 展開，採識別字邊界比對。 | 評分加分項 (+5)；\n不支援函式型巨集（#define MAX(a,b)...）。 |
+| <b>switch / case / default</b> | 多分支選擇陳述式，支援 fall-through（未加 break 時繼續執行下一個 case），以 BreakException 中止。 | 評分加分項 (+5)；已實作。\npostfix ++ / -- 刻意不支援。 |
+| <b>複合賦值運算子</b>\n(Compound Assignment) | += -= *= /= %= 五個複合賦值，在求值後將結果截斷為 int32 再存回左值。 | 前綴 ++ / -- 支援；\n後綴版本未實作。 |
+| <b>執行期錯誤處理</b>\n(Runtime Error Handling) | 直譯器在執行階段偵測到的錯誤（如除以零、未宣告變數），以 Runtime error: <msg> 格式回報。 | 評分加分項 (+5)；\n無 "Error: " 前綴。 |
+endlegend
+
+@enduml

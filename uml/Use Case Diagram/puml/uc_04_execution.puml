@@ -1,0 +1,36 @@
+@startuml uc_04_execution
+skinparam dpi 300
+title UC04 - 程式執行
+
+left to right direction
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
+  ActorBorderColor black
+  FontSize 13
+}
+
+actor 使用者
+
+rectangle "程式執行" {
+  usecase "RUN 執行程式" as RUN
+  usecase "CHECK 語法檢查" as CHECK
+  usecase "語法解析" as PARSE
+  usecase "AST 走訪執行" as AST
+  usecase "顯示執行追蹤" as TRACE
+  usecase "回報執行期錯誤" as ERR
+}
+
+使用者 --> RUN
+使用者 --> CHECK
+
+RUN ..> PARSE : <<include>>
+RUN ..> AST   : <<include>>
+CHECK ..> PARSE : <<include>>
+TRACE ..> RUN  : <<extend>>\n{TRACE 已啟用}
+ERR   ..> AST  : <<extend>>\n{發生執行期例外}
+
+note right of TRACE : 條件: {TRACE 已啟用}\n延伸點: 啟用追蹤
+note right of ERR   : 條件: {發生執行期例外}
+
+@enduml

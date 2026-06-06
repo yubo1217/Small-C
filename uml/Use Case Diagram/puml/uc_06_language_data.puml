@@ -1,0 +1,32 @@
+@startuml uc_06_language_data
+skinparam dpi 300
+title UC06 - 語言資料宣告
+
+left to right direction
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
+  ActorBorderColor black
+  FontSize 13
+}
+
+actor 開發者
+
+rectangle "語言資料宣告" {
+  usecase "宣告資料" as ROOT
+  usecase "宣告整數變數\n(int)" as INT
+  usecase "宣告字元變數\n(char)" as CHAR
+  usecase "宣告指標變數\n(*)" as PTR
+  usecase "宣告陣列\n([ ])" as ARR
+  usecase "配置記憶體空間" as MEM
+  usecase "初始化數值" as INIT
+}
+
+開發者 --> ROOT
+
+ROOT ..> MEM  : <<include>>
+INIT ..> ROOT : <<extend>>\n{宣告時有提供初始值}
+
+note right of INIT : 條件: {宣告時有提供初始值}\n延伸點: 有初始值
+
+@enduml

@@ -1,0 +1,38 @@
+@startuml uc_01_repl_overview
+skinparam dpi 300
+title UC01 - REPL 系統總覽
+
+left to right direction
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
+  ActorBorderColor black
+  ActorFontSize 13
+  FontSize 13
+}
+
+actor 使用者
+
+rectangle "Small-C REPL 系統" {
+  usecase "管理程式碼輸入" as UC1
+  usecase "執行程式" as UC2
+  usecase "語法檢查" as UC3
+  usecase "語法解析" as UC4
+  usecase "查詢系統資訊" as UC5
+  usecase "離開系統" as UC6
+  usecase "顯示執行追蹤" as UC7
+}
+
+使用者 --> UC1
+使用者 --> UC2
+使用者 --> UC3
+使用者 --> UC5
+使用者 --> UC6
+
+UC2 ..> UC4 : <<include>>
+UC3 ..> UC4 : <<include>>
+UC7 ..> UC2 : <<extend>>\n{TRACE 已啟用}
+
+note right of UC7 : 條件: {TRACE 已啟用}\n延伸點: 啟用追蹤
+
+@enduml

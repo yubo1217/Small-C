@@ -1,0 +1,34 @@
+@startuml uc_02_program_input
+skinparam dpi 300
+title UC02 - 程式碼輸入管理
+
+left to right direction
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
+  ActorBorderColor black
+  FontSize 13
+}
+
+actor 使用者
+
+rectangle "程式碼輸入" {
+  usecase "管理程式碼來源" as ROOT
+  usecase "直接輸入程式碼" as UC1
+  usecase "LOAD 載入外部檔案" as UC2
+  usecase "APPEND 附加程式碼" as UC3
+  usecase "更新程式緩衝區" as UC4
+  usecase "NEW 清空緩衝區" as UC5
+  usecase "SAVE 儲存程式檔案" as UC6
+}
+
+使用者 --> ROOT
+
+UC1 ..> UC4 : <<include>>
+UC2 ..> UC4 : <<include>>
+UC3 ..> UC4 : <<include>>
+UC6 ..> ROOT : <<extend>>\n{使用者執行 SAVE}
+
+note right of UC6 : 條件: {使用者執行 SAVE}\n延伸點: 需要儲存
+
+@enduml

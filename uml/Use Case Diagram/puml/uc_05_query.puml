@@ -1,0 +1,32 @@
+@startuml uc_05_query
+skinparam dpi 300
+title UC05 - 系統查詢
+
+left to right direction
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
+  ActorBorderColor black
+  FontSize 13
+}
+
+actor 使用者
+
+rectangle "系統查詢" {
+  usecase "查詢系統資訊" as ROOT
+  usecase "VARS 查看變數" as VARS
+  usecase "FUNCS 查看函式" as FUNCS
+  usecase "ABOUT 顯示系統資訊" as ABOUT
+  usecase "HELP 顯示說明" as HELP
+  usecase "存取執行環境" as ENV
+}
+
+使用者 --> VARS
+使用者 --> FUNCS
+使用者 --> ABOUT
+使用者 --> HELP
+
+VARS  ..> ENV : <<include>>
+FUNCS ..> ENV : <<include>>
+
+@enduml

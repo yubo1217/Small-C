@@ -1,0 +1,34 @@
+@startuml uc_08_functions
+skinparam dpi 300
+title UC08 - 函式呼叫
+
+left to right direction
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
+  ActorBorderColor black
+  FontSize 13
+}
+
+actor 開發者
+
+rectangle "函式呼叫" {
+  usecase "呼叫函式" as CALL
+  usecase "呼叫使用者定義函式" as USER_FUNC
+  usecase "呼叫內建函式" as BUILTIN
+  usecase "傳遞引數" as ARGS
+  usecase "查找函式定義" as LOOKUP_USER
+  usecase "查找內建分派表" as LOOKUP_BUILTIN
+  usecase "遞迴呼叫" as RECUR
+}
+
+開發者 --> CALL
+
+CALL       ..> ARGS         : <<include>>
+USER_FUNC  ..> LOOKUP_USER  : <<include>>
+BUILTIN    ..> LOOKUP_BUILTIN : <<include>>
+RECUR      ..> CALL         : <<extend>>\n{函式在本體內呼叫自身}
+
+note right of RECUR : 條件: {函式在其本體內呼叫自身}\n延伸點: 函式呼叫自身
+
+@enduml
