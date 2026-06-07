@@ -1,5 +1,5 @@
 @startuml ad_05_query
-skinparam dpi 300
+skinparam dpi 150
 skinparam backgroundColor white
 skinparam activity {
   BackgroundColor white
