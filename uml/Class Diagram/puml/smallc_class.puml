@@ -1,0 +1,510 @@
+@startuml smallc_class
+skinparam dpi 300
+skinparam backgroundColor white
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor white
+  BorderColor black
+  ArrowColor #333333
+  FontSize 11
+  HeaderBackgroundColor #ddeeff
+}
+skinparam abstract {
+  BackgroundColor #f8f8f8
+  BorderColor black
+  HeaderBackgroundColor #e8e8e8
+}
+skinparam packageStyle rectangle
+skinparam package {
+  BackgroundColor white
+  BorderColor #888888
+  FontSize 12
+}
+skinparam note {
+  BackgroundColor lightyellow
+  BorderColor gray
+}
+
+title Small-C 互動式直譯器 — 系統類別圖
+
+' ══════════════════════════════════════════════════
+' Package: lexer.py
+' ══════════════════════════════════════════════════
+package "lexer.py  〔詞法分析〕" as PKG_LEXER #eaf4fb {
+
+  class Token {
+    + kind  : str
+    + value : Any
+    + line  : int
+    --
+    + __repr__() : str
+  }
+
+  class Lexer {
+    + {static} KEYWORDS   : dict[str,str]
+    + {static} SINGLE_OPS : dict[str,str]
+    + {static} DOUBLE_OPS : dict[str,str]
+    + {static} SYMBOLS    : dict[str,str]
+    - text         : str
+    - pos          : int
+    - line         : int
+    - current_char : str
+    --
+    + __init__(text : str)
+    + tokenize() : Generator[Token]
+    - _advance()
+    - _peek() : str
+    - _skip_whitespace_and_comments() : Token
+    - _character() : Token
+    - _string_literal() : Token
+    - _number() : Token
+    - _identifier() : Token
+    - _get_next_token() : Token
+  }
+
+  note bottom of Lexer
+    模組層級工具函式：
+    preprocess(source, defines) : str
+    ── 展開 #define 無參數巨集
+  end note
+
+  Lexer ..> Token : <<creates>>
+}
+
+' ══════════════════════════════════════════════════
+' Package: parser.py（AST 節點 + 解析器）
+' ══════════════════════════════════════════════════
+package "parser.py  〔語法分析 / AST〕" as PKG_PARSER #fef9ec {
+
+  class ParseError {
+    + msg  : str
+    + line : int
+    --
+    + __init__(msg, line)
+  }
+
+  ' ── AST 抽象基底 ─────────────────────────────
+  abstract class AST {
+    + {abstract} trace_repr() : str
+  }
+  abstract class Expr extends AST
+  abstract class Stmt extends AST
+
+  ' ── Expr 子層 ────────────────────────────────
+  abstract class Literal     extends Expr
+  abstract class PointerExpr extends Expr
+
+  class Number extends Literal {
+    + value : int
+    --
+    + __str__() : str
+  }
+  class Char extends Literal {
+    + value : str
+    --
+    + __str__() : str
+  }
+  class StringLiteral extends Literal {
+    + value : str
+    --
+    + __str__() : str
+  }
+  class Identifier extends Expr {
+    + name : str
+    --
+    + __str__() : str
+  }
+  class UnaryOp extends Expr {
+    + op      : str
+    + operand : Expr
+    --
+    + __str__() : str
+  }
+  class BinOp extends Expr {
+    + left  : Expr
+    + op    : str
+    + right : Expr
+    --
+    + __str__() : str
+  }
+  class Call extends Expr {
+    + name : str
+    + args : list[Expr]
+    --
+    + __str__() : str
+  }
+  class ArrayAccess extends Expr {
+    + array : str
+    + index : Expr
+    --
+    + __str__() : str
+  }
+  class Assignment extends Expr {
+    + target : Expr
+    + op     : str
+    + value  : Expr
+    --
+    + __str__() : str
+  }
+  class AddressOf extends PointerExpr {
+    + target : Expr
+    --
+    + __str__() : str
+  }
+  class Deref extends PointerExpr {
+    + pointer : Expr
+    --
+    + __str__() : str
+  }
+
+  ' ── Stmt 子層 ────────────────────────────────
+  abstract class Decl    extends Stmt
+  abstract class LoopStmt extends Stmt
+  abstract class JumpStmt extends Stmt
+
+  class VarDecl extends Decl {
+    + var_type   : str
+    + name       : str
+    + value      : Expr
+    + is_pointer : bool
+    --
+    + trace_repr() : str
+  }
+  class ArrayDecl extends Decl {
+    + var_type : str
+    + name     : str
+    + size     : int
+    + value    : list
+    --
+    + trace_repr() : str
+  }
+  class FuncDef extends Decl {
+    + ret_type   : str
+    + name       : str
+    + params     : list[tuple]
+    + body       : Block
+    + is_pointer : bool
+    + line       : int
+  }
+  class Block extends Stmt {
+    + statements : list[Stmt]
+  }
+  class IfStmt extends Stmt {
+    + condition   : Expr
+    + then_branch : Block
+    + else_branch : Block
+    --
+    + trace_repr() : str
+  }
+  class WhileStmt extends LoopStmt {
+    + condition : Expr
+    + body      : Block
+    --
+    + trace_repr() : str
+  }
+  class DoWhileStmt extends LoopStmt {
+    + body      : Block
+    + condition : Expr
+    --
+    + trace_repr() : str
+  }
+  class ForStmt extends LoopStmt {
+    + init      : Stmt
+    + condition : Expr
+    + update    : Expr
+    + body      : Block
+    --
+    + trace_repr() : str
+  }
+  class SwitchStmt extends Stmt {
+    + expr  : Expr
+    + items : list[tuple]
+    --
+    + trace_repr() : str
+  }
+  class Return extends JumpStmt {
+    + value : Expr
+    --
+    + trace_repr() : str
+  }
+  class BreakStmt    extends JumpStmt
+  class ContinueStmt extends JumpStmt
+  class ExprStmt extends Stmt {
+    + expr : Expr
+    --
+    + trace_repr() : str
+  }
+
+  class Program extends AST {
+    + decls : list[AST]
+  }
+
+  ' ── 解析器主體 ────────────────────────────────
+  class Parser {
+    - tokens  : list[Token]
+    - pos     : int
+    - current : Token
+    --
+    + __init__(text : str)
+    + parse() : Program
+    - _eat(kind) : Token
+    - _peek() : Token
+    - _peek2() : Token
+    - _is_type_token() : bool
+    - _is_func_def() : bool
+    - _declaration() : AST
+    - _func_def() : FuncDef
+    - _var_decl() : Stmt
+    - _statement() : Stmt
+    - _block() : Block
+    - _switch_stmt() : SwitchStmt
+    - _assignment() : Expr
+    - _logic_or() : Expr
+    - _logic_and() : Expr
+    - _bit_or() : Expr
+    - _bit_xor() : Expr
+    - _bit_and() : Expr
+    - _equality() : Expr
+    - _rel() : Expr
+    - _shift() : Expr
+    - _add() : Expr
+    - _mul() : Expr
+    - _unary() : Expr
+    - _primary() : Expr
+  }
+
+  ' ── 關係 ─────────────────────────────────────
+  Program  "1" *-- "0..*" AST     : decls
+  FuncDef  "1" *-- "1"    Block   : body
+  Block    "1" *-- "0..*" Stmt    : statements
+  IfStmt        *-- Block          : then / else
+  WhileStmt     *-- Block          : body
+  DoWhileStmt   *-- Block          : body
+  ForStmt       *-- Block          : body
+  SwitchStmt    *-- "0..*" ExprStmt : cases
+
+  Parser ..> Lexer   : <<use>>
+  Parser ..> Token   : <<use>>
+  Parser ..> Program : <<creates>>
+}
+
+' ══════════════════════════════════════════════════
+' Package: memory.py
+' ══════════════════════════════════════════════════
+package "memory.py  〔記憶體模型〕" as PKG_MEM #edfff0 {
+
+  class Memory {
+    + data      : list[int]
+    + heap_top  : int
+    - _alloc_map : dict[int,int]
+    --
+    + __init__(size : int = 65536)
+    + allocate(size : int) : int
+    + free_to(addr : int)
+    + get_alloc_end(addr : int) : int
+    + read(addr : int) : int
+    + write(addr : int, value : int)
+    + write_char(addr : int, value : int)
+    + read_string(addr : int) : str
+    + write_string(addr : int, s : str)
+    + reset()
+  }
+
+  note bottom of Memory
+    模組層級工具函式：
+    int32(value : int) : int
+    ── 截斷為 32 位元有號整數
+    供 Memory.write() 與 Builtins 共用
+  end note
+}
+
+' ══════════════════════════════════════════════════
+' Package: symtable.py
+' ══════════════════════════════════════════════════
+package "symtable.py  〔符號表〕" as PKG_SYM #fffde8 {
+
+  class Symbol {
+    + name       : str
+    + var_type   : str
+    + addr       : int
+    + is_pointer : bool
+    + is_array   : bool
+    + array_size : int
+    --
+    + __repr__() : str
+  }
+
+  class SymbolTable {
+    + memory : Memory
+    + scopes : list[dict[str,Symbol]]
+    --
+    + __init__(memory : Memory)
+    + push_scope()
+    + pop_scope()
+    + is_global() : bool
+    + declare(name, var_type, is_pointer) : Symbol
+    + declare_array(name, var_type, size) : Symbol
+    + lookup(name : str) : Symbol
+    + lookup_or_none(name : str) : Symbol
+    + get_value(name : str) : int
+    + set_value(name : str, value : int)
+    + get_all_globals() : dict
+    + reset()
+  }
+
+  SymbolTable "1" *-- "0..*" Symbol : scopes[ ][ ]
+  SymbolTable      --> Memory        : uses
+}
+
+' ══════════════════════════════════════════════════
+' Package: builtins.py
+' ══════════════════════════════════════════════════
+package "builtins.py  〔內建函式庫〕" as PKG_BLT #fdf0ff {
+
+  class Builtins {
+    + memory    : Memory
+    - _dispatch : dict[str, Callable]
+    --
+    + __init__(memory : Memory)
+    + call(name : str, args : list) : int
+    + is_builtin(name : str) : bool
+    .. I/O ..
+    - _printf(args) : int
+    - _putchar(args) : int
+    - _getchar(args) : int
+    - _puts(args) : int
+    - _scanf(args) : int
+    .. 字串操作 ..
+    - _strlen(args) : int
+    - _strcpy(args) : int
+    - _strcmp(args) : int
+    - _strcat(args) : int
+    .. 數學運算 ..
+    - _abs(args) : int
+    - _max(args) : int
+    - _min(args) : int
+    - _pow(args) : int
+    - _sqrt(args) : int
+    - _rand(args) : int
+    - _srand(args) : int
+    .. 記憶體與工具 ..
+    - _memset(args) : int
+    - _atoi(args) : int
+    - _itoa(args) : int
+    - _exit(args)
+  }
+
+  Builtins --> Memory : uses
+}
+
+' ══════════════════════════════════════════════════
+' Package: interpreter.py
+' ══════════════════════════════════════════════════
+package "interpreter.py  〔直譯器〕" as PKG_INTERP #fff0f0 {
+
+  class BreakException    extends Exception
+  class ContinueException extends Exception
+  class ReturnException   extends Exception {
+    + value : int
+    --
+    + __init__(value : int)
+  }
+
+  class Interpreter {
+    + memory     : Memory
+    + symtable   : SymbolTable
+    + builtins   : Builtins
+    + functions  : dict[str, FuncDef]
+    + trace_mode : bool
+    --
+    + __init__()
+    + reset()
+    + execute(program : Program)
+    + execute_interactive(program : Program)
+    - _exec_decl(node : AST)
+    - _exec_stmt(node : Stmt)
+    - _eval_expr(node : Expr) : int
+    - _eval_binop(node : BinOp) : int
+    - _eval_unaryop(node : UnaryOp) : int
+    - _eval_inc_dec(target, delta : int) : int
+    - _eval_assignment(node : Assignment) : int
+    - _eval_lvalue_read(node : Expr) : int
+    - _eval_lvalue_write(node : Expr, val : int)
+    - _eval_call(node : Call) : int
+    - _call_function(name : str, args : list) : int
+    - _eval_addressof(node : AddressOf) : int
+  }
+
+  Interpreter "1" *-- "1" Memory      : memory
+  Interpreter "1" *-- "1" SymbolTable : symtable
+  Interpreter "1" *-- "1" Builtins    : builtins
+  Interpreter      ..>     Program     : <<executes>>
+  Interpreter      ..>     BreakException    : <<throws/catches>>
+  Interpreter      ..>     ContinueException : <<throws/catches>>
+  Interpreter      ..>     ReturnException   : <<throws/catches>>
+}
+
+' ══════════════════════════════════════════════════
+' Package: repl.py
+' ══════════════════════════════════════════════════
+package "repl.py  〔互動介面〕" as PKG_REPL #f0f0ff {
+
+  class ReplInputCollector {
+    - buffer      : list[str]
+    - brace_depth : int
+    - in_string   : bool
+    - in_char     : bool
+    --
+    + __init__()
+    + feed(line : str) : bool
+    + is_complete() : bool
+    + reset()
+  }
+
+  class REPL {
+    + interpreter : Interpreter
+    + buffer      : list[str]
+    - collector   : ReplInputCollector
+    - defines     : dict[str, str]
+    --
+    + __init__()
+    + run()
+    - _is_command(line : str) : bool
+    - _execute_interactive(source : str)
+    - _handle_command(line : str)
+    - _cmd_load(parts)
+    - _cmd_save(parts)
+    - _cmd_list(parts)
+    - _cmd_edit(parts)
+    - _cmd_delete(parts)
+    - _cmd_insert(parts)
+    - _cmd_append()
+    - _cmd_new()
+    - _cmd_run()
+    - _cmd_check()
+    - _cmd_trace(parts)
+    - _cmd_vars()
+    - _cmd_funcs()
+    - _cmd_help(parts)
+    - _cmd_about()
+    - _cmd_quit()
+    + {static} _format_runtime(e) : str
+  }
+
+  REPL "1" *-- "1" Interpreter       : interpreter
+  REPL "1" *-- "1" ReplInputCollector : collector
+  REPL      ..>     Parser            : <<use>>
+  REPL      ..>     ParseError        : <<catches>>
+}
+
+' ══════════════════════════════════════════════════
+' Package: main.py
+' ══════════════════════════════════════════════════
+package "main.py  〔進入點〕" as PKG_MAIN #f8f8f8 {
+  class Main <<module>> {
+    + {static} main()
+  }
+  Main ..> REPL : <<creates>>
+}
+
+@enduml

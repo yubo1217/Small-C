@@ -1,0 +1,94 @@
+@startuml ad_04_exec
+skinparam dpi 300
+skinparam backgroundColor white
+skinparam activity {
+  BackgroundColor white
+  BorderColor black
+  FontSize 12
+  DiamondBackgroundColor white
+  DiamondBorderColor black
+  ArrowColor black
+}
+skinparam note {
+  BackgroundColor lightyellow
+  BorderColor gray
+}
+title UC04 — 程式執行：活動圖
+
+|#e8f4fd|使用者|
+|#f0f8e8|Lexer / Parser|
+|#fff8e8|Interpreter|
+
+|使用者|
+start
+:輸入 RUN 或 CHECK 指令;
+
+|Lexer / Parser|
+if (緩衝區是否為空 ?) then (是)
+  :顯示「No program loaded」; <<#ffcccc>>
+  stop
+endif
+
+:preprocess()：展開 #define 巨集;
+:Lexer.tokenize()：字元掃描產生 Token 序列;
+
+if (詞法錯誤 ?) then (是)
+  :顯示「Syntax error: <訊息>」; <<#ffcccc>>
+  stop
+endif
+
+:Parser 遞迴下降解析 Token 序列;
+:建立 AST（Program / FuncDef / Stmt / Expr 節點）;
+
+if (語法錯誤（ParseError）?) then (是)
+  :顯示「Error at line N: <訊息>」; <<#ffcccc>>
+  stop
+endif
+
+|使用者|
+if (指令為 CHECK ?) then (是)
+  |Lexer / Parser|
+  :顯示「Syntax OK」;
+  stop
+endif
+
+|Interpreter|
+:execute()：收集全域變數宣告;
+:收集所有 FuncDef（函式定義表）;
+:在 SymbolTable 建立全域符號;
+
+if (找不到 main() ?) then (是)
+  :顯示「Runtime error: main not defined」; <<#ffcccc>>
+  stop
+endif
+
+:呼叫 main()，推入新函式作用域;
+
+if (TRACE 已啟用 ?) then (是)
+  note right: 每個語句節點執行前\n列印 [line n] <statement>
+endif
+
+:走訪 AST，依節點型別分派執行;
+
+if (執行期例外（RuntimeError）?) then (是)
+  if (例外類型 ?) then (除以零)
+    :顯示「Runtime error: division by zero」; <<#ffcccc>>
+  elseif (例外類型 ?) then (未定義變數 / 函式)
+    :顯示「Runtime error: <名稱> not defined」; <<#ffcccc>>
+  elseif (例外類型 ?) then (遞迴超限)
+    :顯示「Runtime error: recursion limit exceeded」; <<#ffcccc>>
+  else (其他例外)
+    :顯示「Runtime error: <訊息>」; <<#ffcccc>>
+  endif
+  stop
+else (正常執行完畢)
+  :main() 返回，彈出函式作用域;
+  :Memory.free_to() 釋放區域記憶體;
+  :顯示程式所有標準輸出結果;
+endif
+
+|使用者|
+:繼續操作或輸入下一道指令;
+stop
+
+@enduml

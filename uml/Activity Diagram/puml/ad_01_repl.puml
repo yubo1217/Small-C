@@ -1,0 +1,77 @@
+@startuml ad_01_repl
+skinparam dpi 300
+skinparam backgroundColor white
+skinparam activity {
+  BackgroundColor white
+  BorderColor black
+  FontSize 12
+  DiamondBackgroundColor white
+  DiamondBorderColor black
+  ArrowColor black
+}
+skinparam note {
+  BackgroundColor lightyellow
+  BorderColor gray
+}
+title UC01 — REPL 系統總覽：活動圖
+
+|#e8f4fd|使用者|
+|#f0f8e8|系統|
+
+|使用者|
+start
+:執行 python main.py;
+
+|系統|
+:初始化直譯器、記憶體、符號表;
+:顯示歡迎訊息與版本資訊;
+:顯示 sc> 提示字元;
+
+repeat
+  |使用者|
+  :輸入一行文字;
+
+  |系統|
+  if (是否為 QUIT / EXIT ?) then (是)
+    :正常結束系統;
+    stop
+  elseif (是否為未知指令 ?) then (是)
+    :顯示「Unknown command: <指令>」; <<#ffcccc>>
+  elseif (是否為 RUN ?) then (是)
+    if (緩衝區是否為空 ?) then (是)
+      :顯示「No program loaded」; <<#ffcccc>>
+    else (否)
+      :取出緩衝區程式碼;
+      :Lexer 分詞，產生 Token 序列;
+      :Parser 遞迴下降解析，產生 AST;
+      if (語法正確 ?) then (是)
+        :直譯器收集全域宣告與函式定義;
+        :呼叫 main()，走訪 AST 執行;
+        if (TRACE 已啟用 ?) then (是)
+          note right: 每節點執行前\n印出 [line n] <stmt>
+        endif
+        if (執行期例外 ?) then (是)
+          :顯示「Runtime error: <訊息>」; <<#ffcccc>>
+        else (否)
+          :顯示程式標準輸出結果;
+        endif
+      else (否)
+        :顯示「Error at line N: <訊息>」; <<#ffcccc>>
+      endif
+    endif
+  elseif (是否為 CHECK ?) then (是)
+    :Lexer + Parser 解析緩衝區;
+    if (語法正確 ?) then (是)
+      :顯示「Syntax OK」;
+    else (否)
+      :顯示「Error at line N: <訊息>」; <<#ffcccc>>
+    endif
+  else (其他有效指令)
+    :執行對應 REPL 指令處理器;
+    :顯示指令執行結果;
+  endif
+
+  :顯示 sc> 提示字元;
+repeat while (繼續等待使用者輸入)
+
+@enduml

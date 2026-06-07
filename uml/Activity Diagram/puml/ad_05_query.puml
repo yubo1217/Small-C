@@ -1,0 +1,73 @@
+@startuml ad_05_query
+skinparam dpi 300
+skinparam backgroundColor white
+skinparam activity {
+  BackgroundColor white
+  BorderColor black
+  FontSize 12
+  DiamondBackgroundColor white
+  DiamondBorderColor black
+  ArrowColor black
+}
+skinparam note {
+  BackgroundColor lightyellow
+  BorderColor gray
+}
+title UC05 — 系統查詢：活動圖
+
+|#e8f4fd|使用者|
+|#f0f8e8|系統|
+
+|使用者|
+start
+:輸入查詢指令;
+
+|系統|
+if (指令類型 ?) then (VARS)
+
+  :存取直譯器的 SymbolTable（全域作用域）;
+  if (是否有已宣告的變數 ?) then (是)
+    :讀取所有符號的名稱、型別與記憶體位址;
+    :從 Memory 讀取每個符號的當前數值;
+    :逐行列出「<名稱>  <型別>  =  <值>」;
+  else (否)
+    :顯示「No variables defined」; <<#ffcccc>>
+  endif
+
+elseif (指令類型 ?) then (FUNCS)
+
+  :存取直譯器的函式定義表（functions dict）;
+  if (是否有已定義的函式 ?) then (是)
+    :讀取每個函式的名稱、回傳型別與定義行號;
+    :逐行列出「<名稱>(<參數列表>)  at line N」;
+  else (否)
+    :顯示「No functions defined」; <<#ffcccc>>
+  endif
+
+elseif (指令類型 ?) then (ABOUT)
+
+  :顯示系統名稱：Small-C Interpreter;
+  :顯示版本、作者、學期資訊;
+
+elseif (指令類型 ?) then (HELP)
+
+  :列出所有支援的 REPL 指令清單;
+  :說明每個指令的用途與用法;
+
+else (TRACE ON / OFF)
+
+  if (參數為 ON ?) then (是)
+    :設定 trace_mode = True;
+    :顯示「Trace ON」;
+  else (OFF)
+    :設定 trace_mode = False;
+    :顯示「Trace OFF」;
+  endif
+
+endif
+
+|使用者|
+:繼續操作或輸入下一道指令;
+stop
+
+@enduml

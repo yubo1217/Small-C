@@ -1,0 +1,82 @@
+@startuml ad_02_input
+skinparam dpi 300
+skinparam backgroundColor white
+skinparam activity {
+  BackgroundColor white
+  BorderColor black
+  FontSize 12
+  DiamondBackgroundColor white
+  DiamondBorderColor black
+  ArrowColor black
+}
+skinparam note {
+  BackgroundColor lightyellow
+  BorderColor gray
+}
+title UC02 — 程式碼輸入管理：活動圖
+
+|#e8f4fd|使用者|
+|#f0f8e8|系統|
+
+|使用者|
+start
+:輸入程式碼輸入相關指令;
+
+|系統|
+if (指令類型 ?) then (LOAD <filename>)
+
+  :在檔案系統中搜尋指定檔案;
+  if (檔案是否存在 ?) then (是)
+    :讀取檔案全部內容;
+    :以新內容取代緩衝區（buffer）;
+    :顯示「Loaded X lines from <filename>」;
+  else (否)
+    :顯示「File not found: <filename>」\n（緩衝區不變）; <<#ffcccc>>
+  endif
+
+elseif (指令類型 ?) then (APPEND <filename>)
+
+  :在檔案系統中搜尋指定檔案;
+  if (檔案是否存在 ?) then (是)
+    :讀取檔案內容，附加至緩衝區末尾;
+    :顯示「Appended X lines from <filename>」;
+  else (否)
+    :顯示「File not found: <filename>」; <<#ffcccc>>
+  endif
+
+elseif (指令類型 ?) then (SAVE <filename>)
+
+  :嘗試開啟目標路徑進行寫入;
+  if (檔案可寫入 ?) then (是)
+    :將緩衝區所有行寫入檔案;
+    :顯示「Saved X lines to <filename>」;
+  else (否)
+    :顯示「Cannot write to file: <filename>」\n（緩衝區不變）; <<#ffcccc>>
+  endif
+
+elseif (指令類型 ?) then (NEW)
+
+  :清空緩衝區（buffer = []）;
+  :顯示「Buffer cleared」;
+
+else (直接輸入程式碼)
+
+  :ReplInputCollector 追蹤大括號深度\n及字串 / 註解狀態;
+  if (輸入是否跨多行（函式定義等）?) then (是)
+    :持續收集行，直到大括號平衡;
+  endif
+  :將完整輸入片段加入緩衝區;
+  :即時解析並執行（互動模式）;
+  if (語法或執行期錯誤 ?) then (是)
+    :顯示錯誤訊息（不影響緩衝區已有內容）; <<#ffcccc>>
+  else (否)
+    :顯示執行結果（若有輸出）;
+  endif
+
+endif
+
+|使用者|
+:繼續操作或輸入下一道指令;
+stop
+
+@enduml
